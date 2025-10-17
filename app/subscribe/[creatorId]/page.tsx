@@ -26,26 +26,24 @@ import {
   FileText,
 } from "lucide-react";
 import { encodeFunctionData, parseUnits } from "viem";
-// Assuming you have these utility files:
 import { USDC, erc20Abi } from "@/lib/usdc";
 import { toast } from "sonner";
 
-// The ReturnType utility type is not necessary here as 'sendTransaction'
-// is used directly from the hook result, but if you needed to type it
-// for an external function/prop, this is what the type is:
-// type SendTransactionFn = ReturnType<typeof useSendTransaction>["sendTransaction"];
+type SendTransactionFn = ReturnType<
+  typeof useSendTransaction
+>["sendTransaction"];
 
 interface Creator {
   id: string;
   displayName: string;
   description: string | null;
-  subscriptionPrice: string; // Price in BigInt/string format (wei for ETH/USDC units)
+  subscriptionPrice: string;
   subscriberCount: number;
   articleCount: number;
   user: {
     username: string | null;
     avatar: string | null;
-    address: string; // Creator's wallet address
+    address: string;
   };
 }
 
@@ -54,11 +52,10 @@ function SubscribeContent({
 }: {
   params: Promise<{ creatorId: string }>;
 }) {
-  // --- Next.js and State Hooks ---
   const { creatorId } = use(params);
   const router = useRouter();
-  const { isConnected } = useAccount(); // Check wallet connection status
-  const { userId, subAccount } = useAuthStore(); // Get user ID and sub-account status
+  const { isConnected } = useAccount();
+  const { userId, subAccount } = useAuthStore();
   const [creator, setCreator] = useState<Creator | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState("");
@@ -129,7 +126,7 @@ function SubscribeContent({
       sendTransaction({
         to: USDC.address,
         data,
-        value: 0n, // ETH value is 0 since we're sending an ERC-20 token
+        value: BigInt(0),
       });
 
       toast.loading("Processing subscription payment...", {
@@ -142,6 +139,7 @@ function SubscribeContent({
       toast.error("Transaction failed or was rejected.");
     }
   }, [subAccount, creator, sendTransaction]);
+
   useEffect(() => {
     if (isConfirmed && creator) {
       fetch("/api/subscriptions/create", {
@@ -176,9 +174,8 @@ function SubscribeContent({
 
   const formatPrice = (price: string) => {
     const value = BigInt(price);
-
-    const eth = Number(value) / 1e6;
-    return eth.toFixed(2) + " USDC";
+    const usd = Number(value) / 1e6;
+    return usd.toFixed(2) + " USDC";
   };
 
   if (isLoading) {
@@ -203,7 +200,6 @@ function SubscribeContent({
     );
   }
 
-  // --- Render Main Content ---
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">

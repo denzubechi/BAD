@@ -137,7 +137,7 @@ export function SubAccountManager() {
   };
 
   const sendTestCall = useCallback(async () => {
-    if (!walletClient || !subAccount) {
+    if (!provider || !subAccount) {
       setStatus("Sub-account not available");
       setStatusType("error");
       return;
@@ -156,7 +156,7 @@ export function SubAccountManager() {
         },
       ];
 
-      const callsId = (await walletClient.request({
+      const callsId = (await provider.request({
         method: "wallet_sendCalls",
         params: [
           {

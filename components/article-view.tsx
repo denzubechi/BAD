@@ -1,118 +1,101 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useAuthStore } from "@/lib/store/auth-store"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Eye, Calendar, Clock, ArrowLeft, Share2 } from "lucide-react"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import { PremiumContentGate } from "./premium-content-gate"
-import { ConnectWallet } from "./connect-wallet"
+import { useEffect, useState } from "react";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Eye, Calendar, Clock, ArrowLeft, Share2 } from "lucide-react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { PremiumContentGate } from "./premium-content-gate";
+import { ConnectWallet } from "./connect-wallet";
 
 interface Article {
-  id: string
-  title: string
-  slug: string
-  content: string
-  excerpt: string | null
-  coverImage: string | null
-  isPremium: boolean
-  viewCount: number
-  publishedAt: string | null
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string | null;
+  coverImage: string | null;
+  isPremium: boolean;
+  viewCount: number;
+  publishedAt: string | null;
   author: {
-    id: string
-    username: string | null
-    avatar: string | null
-    address: string
-  }
+    id: string;
+    username: string | null;
+    avatar: string | null;
+    address: string;
+  };
 }
 
 interface ArticleViewProps {
-  article: Article
+  article: Article;
 }
 
 export function ArticleView({ article }: ArticleViewProps) {
-  const { userId, isPremium, isConnected, subAccount } = useAuthStore()
-  const [hasAccess, setHasAccess] = useState(false)
-  const [isCheckingAccess, setIsCheckingAccess] = useState(true)
-  const isAuthor = userId === article.author.id
+  const { userId, isPremium, isConnected, subAccount } = useAuthStore();
+  const [hasAccess, setHasAccess] = useState(false);
+  const [isCheckingAccess, setIsCheckingAccess] = useState(true);
+  const isAuthor = userId === article.author.id;
 
   useEffect(() => {
-    checkAccess()
-  }, [userId, isPremium, article.id, article.author.id])
+    checkAccess();
+  }, [userId, isPremium, article.id, article.author.id]);
 
   const checkAccess = async () => {
-    setIsCheckingAccess(true)
+    setIsCheckingAccess(true);
 
     // Author always has access
     if (isAuthor) {
-      setHasAccess(true)
-      setIsCheckingAccess(false)
-      return
+      setHasAccess(true);
+      setIsCheckingAccess(false);
+      return;
     }
 
     // Non-premium articles are accessible to everyone
     if (!article.isPremium) {
-      setHasAccess(true)
-      setIsCheckingAccess(false)
-      return
+      setHasAccess(true);
+      setIsCheckingAccess(false);
+      return;
     }
 
     // For premium articles, check if user has active subscription
     if (userId) {
       try {
-        const response = await fetch(`/api/subscriptions?subscriberId=${userId}`)
+        const response = await fetch(
+          `/api/subscriptions?subscriberId=${userId}`
+        );
         if (response.ok) {
-          const data = await response.json()
+          const data = await response.json();
           const hasActiveSubscription = data.subscriptions.some(
-            (sub: any) => sub.creatorId === article.author.id && sub.status === "ACTIVE",
-          )
-          setHasAccess(hasActiveSubscription)
+            (sub: any) =>
+              sub.creatorId === article.author.id && sub.status === "ACTIVE"
+          );
+          setHasAccess(hasActiveSubscription);
         }
       } catch (error) {
-        console.error("[v0] Error checking subscription:", error)
+        console.error("[v0] Error checking subscription:", error);
       }
     }
 
-    setIsCheckingAccess(false)
-  }
+    setIsCheckingAccess(false);
+  };
 
   const formatDate = (date: string | null) => {
-    if (!date) return "Draft"
+    if (!date) return "Draft";
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
-    })
-  }
+    });
+  };
 
-  const estimatedReadTime = Math.ceil(article.content.split(" ").length / 200)
+  const estimatedReadTime = Math.ceil(article.content.split(" ").length / 200);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <motion.header
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl"
-      >
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
-
-          <ConnectWallet />
-        </div>
-      </motion.header>
-
       <main className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Cover Image */}
         {article.coverImage && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -126,12 +109,13 @@ export function ArticleView({ article }: ArticleViewProps) {
               className="w-full h-full object-cover"
             />
             {article.isPremium && (
-              <Badge className="absolute top-4 right-4 bg-primary text-primary-foreground">Premium Content</Badge>
+              <Badge className="absolute top-4 right-4 bg-primary text-primary-foreground">
+                Premium Content
+              </Badge>
             )}
           </motion.div>
         )}
 
-        {/* Article Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -150,10 +134,14 @@ export function ArticleView({ article }: ArticleViewProps) {
             </Badge>
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-bold text-balance leading-tight">{article.title}</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-balance leading-tight">
+            {article.title}
+          </h1>
 
           {article.excerpt && (
-            <p className="text-xl text-muted-foreground text-balance leading-relaxed">{article.excerpt}</p>
+            <p className="text-xl text-muted-foreground text-balance leading-relaxed">
+              {article.excerpt}
+            </p>
           )}
 
           {/* Author Info */}
@@ -171,7 +159,10 @@ export function ArticleView({ article }: ArticleViewProps) {
               <div>
                 <p className="font-semibold">
                   {article.author.username ||
-                    `${article.author.address.slice(0, 6)}...${article.author.address.slice(-4)}`}
+                    `${article.author.address.slice(
+                      0,
+                      6
+                    )}...${article.author.address.slice(-4)}`}
                 </p>
                 {article.publishedAt && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -208,12 +199,17 @@ export function ArticleView({ article }: ArticleViewProps) {
             <Card className="border-0 shadow-none">
               <CardContent className="pt-6 px-0">
                 <article className="prose prose-lg prose-neutral dark:prose-invert max-w-none">
-                  <div className="whitespace-pre-wrap leading-relaxed">{article.content}</div>
+                  <div className="whitespace-pre-wrap leading-relaxed">
+                    {article.content}
+                  </div>
                 </article>
               </CardContent>
             </Card>
           ) : (
-            <PremiumContentGate creatorId={article.author.id} creatorName={article.author.username || undefined}>
+            <PremiumContentGate
+              creatorId={article.author.id}
+              creatorName={article.author.username || undefined}
+            >
               {/* This won't be shown, but required for component structure */}
               <div />
             </PremiumContentGate>
@@ -241,12 +237,16 @@ export function ArticleView({ article }: ArticleViewProps) {
                     <div className="w-20 h-20 rounded-full bg-primary/10" />
                   )}
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2">Written by {article.author.username || "Anonymous"}</h3>
+                    <h3 className="text-xl font-bold mb-2">
+                      Written by {article.author.username || "Anonymous"}
+                    </h3>
                     <p className="text-muted-foreground mb-4">
                       Get access to all premium content and exclusive insights
                     </p>
                     <Button asChild>
-                      <Link href={`/subscribe/${article.author.id}`}>Subscribe for More</Link>
+                      <Link href={`/subscribe/${article.author.id}`}>
+                        Subscribe for More
+                      </Link>
                     </Button>
                   </div>
                 </div>
@@ -256,5 +256,5 @@ export function ArticleView({ article }: ArticleViewProps) {
         )}
       </main>
     </div>
-  )
+  );
 }

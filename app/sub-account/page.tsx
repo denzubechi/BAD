@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { AuthGuard } from "@/components/auth-guard"
-import { SubAccountManager } from "@/components/sub-account-manager"
+import { AuthGuard } from "@/components/auth-guard";
+import { SubAccountManager } from "@/components/sub-account-manager";
 
 function SubAccountContent() {
   return (
@@ -16,13 +16,13 @@ function SubAccountContent() {
         <SubAccountManager />
       </main>
     </div>
-  )
+  );
 }
 
 export default function SubAccountPage() {
   return (
-    <AuthGuard>
-      <SubAccountContent />
-    </AuthGuard>
-  )
+    // <AuthGuard>
+    <SubAccountContent />
+    // </AuthGuard>
+  );
 }

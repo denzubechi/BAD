@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import Link from "next/link"
-import { motion, useScroll, useSpring } from "framer-motion"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { motion, useScroll, useSpring } from "framer-motion";
 import {
   TrendingUp,
   Zap,
@@ -19,135 +19,55 @@ import {
   Rocket,
   Globe,
   Layers,
-} from "lucide-react"
-
-const sampleArticles = [
-  {
-    id: 1,
-    slug: "base-defi-summer-2025",
-    title: "Base DeFi Summer: Top 5 Protocols to Watch in 2025",
-    excerpt:
-      "Deep dive into the most promising DeFi protocols launching on Base this quarter, with exclusive alpha on upcoming token launches.",
-    author: "Sarah Chen",
-    authorImage: "/crypto-analyst-woman.jpg",
-    category: "DeFi",
-    readTime: "8 min",
-    isPremium: true,
-    image: "/defi-blockchain-abstract.jpg",
-    views: 12453,
-  },
-  {
-    id: 2,
-    slug: "nft-market-analysis-base-ethereum",
-    title: "NFT Market Analysis: Base vs Ethereum Gas Wars",
-    excerpt:
-      "Comprehensive analysis of NFT trading volumes, gas fees, and user migration patterns from Ethereum to Base.",
-    author: "Marcus Rodriguez",
-    authorImage: "/crypto-trader-man.jpg",
-    category: "NFTs",
-    readTime: "6 min",
-    isPremium: false,
-    image: "/nft-digital-art.jpg",
-    views: 8932,
-  },
-  {
-    id: 3,
-    slug: "base-social-protocol-launch",
-    title: "Exclusive: Inside Base's New Social Protocol Launch",
-    excerpt:
-      "First look at the revolutionary social protocol that's about to change how we interact on-chain. Includes early access details.",
-    author: "Alex Kim",
-    authorImage: "/tech-analyst.jpg",
-    category: "Social",
-    readTime: "10 min",
-    isPremium: true,
-    image: "/social-network-blockchain.jpg",
-    views: 15678,
-  },
-]
-
-const topCreators = [
-  {
-    id: 1,
-    name: "Sarah Chen",
-    bio: "DeFi Strategist & Former Goldman Sachs Analyst",
-    image: "/crypto-analyst-woman.jpg",
-    subscribers: 2847,
-    articles: 156,
-    verified: true,
-    monthlyPrice: "0.05 ETH",
-  },
-  {
-    id: 2,
-    name: "Marcus Rodriguez",
-    bio: "NFT Market Expert & On-chain Data Analyst",
-    image: "/crypto-trader-man.jpg",
-    subscribers: 1923,
-    articles: 98,
-    verified: true,
-    monthlyPrice: "0.03 ETH",
-  },
-  {
-    id: 3,
-    name: "Alex Kim",
-    bio: "Base Ecosystem Researcher & Protocol Advisor",
-    image: "/tech-analyst.jpg",
-    subscribers: 3156,
-    articles: 203,
-    verified: true,
-    monthlyPrice: "0.08 ETH",
-  },
-  {
-    id: 4,
-    name: "Emma Thompson",
-    bio: "Trading Signals & Technical Analysis Specialist",
-    image: "/financial-analyst-woman.jpg",
-    subscribers: 2341,
-    articles: 134,
-    verified: true,
-    monthlyPrice: "0.04 ETH",
-  },
-]
+} from "lucide-react";
 
 const features = [
   {
     icon: Zap,
     title: "Instant Subscriptions",
-    description: "Subscribe to creators with one click using Base Spend Permissions. No manual payments every month.",
+    description:
+      "Subscribe to creators with one click using Base Spend Permissions. No manual payments every month.",
     gradient: "from-yellow-500 to-orange-500",
   },
   {
     icon: Shield,
     title: "Non-Custodial",
-    description: "Your funds stay in your wallet. You control your subscriptions and can cancel anytime.",
+    description:
+      "Your funds stay in your wallet. You control your subscriptions and can cancel anytime.",
     gradient: "from-blue-500 to-cyan-500",
   },
   {
     icon: TrendingUp,
     title: "Premium Alpha",
-    description: "Access exclusive trading signals, market analysis, and early protocol insights from top analysts.",
+    description:
+      "Access exclusive trading signals, market analysis, and early protocol insights from top analysts.",
     gradient: "from-green-500 to-emerald-500",
   },
   {
     icon: Users,
     title: "Creator Economy",
-    description: "Monetize your expertise with crypto-native subscriptions. No middlemen, no chargebacks.",
+    description:
+      "Monetize your expertise with crypto-native subscriptions. No middlemen, no chargebacks.",
     gradient: "from-purple-500 to-pink-500",
   },
-]
+];
 
 const stats = [
   { label: "Active Creators", value: "500+", icon: Users },
   { label: "Premium Articles", value: "10K+", icon: Layers },
   { label: "Subscribers", value: "25K+", icon: Star },
   { label: "Daily Signals", value: "100+", icon: TrendingUp },
-]
+];
 
 // Floating orb component
 function FloatingOrb({ delay = 0, duration = 20, size = 300, color = "blue" }) {
   return (
     <motion.div
-      className={`absolute rounded-full blur-3xl opacity-20 bg-gradient-to-r ${color === "blue" ? "from-blue-500 to-cyan-500" : "from-purple-500 to-pink-500"}`}
+      className={`absolute rounded-full blur-3xl opacity-20 bg-gradient-to-r ${
+        color === "blue"
+          ? "from-blue-500 to-cyan-500"
+          : "from-purple-500 to-pink-500"
+      }`}
       style={{
         width: size,
         height: size,
@@ -164,29 +84,60 @@ function FloatingOrb({ delay = 0, duration = 20, size = 300, color = "blue" }) {
         ease: "easeInOut",
       }}
     />
-  )
+  );
 }
 
 export default function HomePage() {
-  const { scrollYProgress } = useScroll()
+  const { scrollYProgress } = useScroll();
   const scaleProgress = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
     restDelta: 0.001,
-  })
+  });
 
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [articles, setArticles] = useState<any[]>([]);
+  const [creators, setCreators] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({
         x: (e.clientX / window.innerWidth - 0.5) * 20,
         y: (e.clientY / window.innerHeight - 0.5) * 20,
-      })
-    }
-    window.addEventListener("mousemove", handleMouseMove)
-    return () => window.removeEventListener("mousemove", handleMouseMove)
-  }, [])
+      });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [articlesRes, creatorsRes] = await Promise.all([
+          fetch("/api/articles?status=PUBLISHED"),
+          fetch("/api/creators"),
+        ]);
+
+        if (articlesRes.ok) {
+          const articlesData = await articlesRes.json();
+          setArticles(articlesData.articles?.slice(0, 3) || []);
+        }
+
+        if (creatorsRes.ok) {
+          const creatorsData = await creatorsRes.json();
+          setCreators(creatorsData.creators?.slice(0, 4) || []);
+        }
+      } catch (error) {
+        console.error("[v0] Error fetching landing page data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 overflow-hidden">
@@ -258,8 +209,9 @@ export default function HomePage() {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="text-xl md:text-2xl text-slate-400 text-center max-w-3xl mx-auto mb-12 leading-relaxed"
               >
-                Decentralized premium financial newsletter and trading signals for the Base ecosystem. Subscribe with
-                crypto, no credit cards required.
+                Decentralized premium financial newsletter and trading signals
+                for the Base ecosystem. Subscribe with crypto, no credit cards
+                required.
               </motion.p>
 
               {/* CTA Buttons */}
@@ -287,7 +239,7 @@ export default function HomePage() {
                     </span>
                   </Link>
                 </Button>
-                <Button
+                {/* <Button
                   size="lg"
                   variant="outline"
                   className="border-slate-700 hover:border-blue-500 bg-slate-900/50 backdrop-blur-xl px-8 py-6 text-lg group"
@@ -297,7 +249,7 @@ export default function HomePage() {
                     <Rocket className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
                     Become a Creator
                   </Link>
-                </Button>
+                </Button> */}
               </motion.div>
 
               {/* Animated Stats */}
@@ -363,10 +315,13 @@ export default function HomePage() {
                 <span className="bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
                   Why Choose
                 </span>{" "}
-                <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">BAD?</span>
+                <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                  BAD?
+                </span>
               </h2>
               <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-                The first truly crypto-native publishing platform with automated subscriptions
+                The first truly crypto-native publishing platform with automated
+                subscriptions
               </p>
             </motion.div>
 
@@ -390,8 +345,12 @@ export default function HomePage() {
                     >
                       <feature.icon className="w-8 h-8 text-white" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-3">{feature.title}</h3>
-                    <p className="text-slate-400 leading-relaxed">{feature.description}</p>
+                    <h3 className="text-2xl font-bold text-white mb-3">
+                      {feature.title}
+                    </h3>
+                    <p className="text-slate-400 leading-relaxed">
+                      {feature.description}
+                    </p>
                   </div>
                 </motion.div>
               ))}
@@ -415,7 +374,9 @@ export default function HomePage() {
                     Latest Insights
                   </span>
                 </h2>
-                <p className="text-slate-400 text-lg">Premium analysis from top Base ecosystem analysts</p>
+                <p className="text-slate-400 text-lg">
+                  Premium analysis from top Base ecosystem analysts
+                </p>
               </div>
               <Button
                 variant="ghost"
@@ -430,65 +391,110 @@ export default function HomePage() {
             </motion.div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sampleArticles.map((article, index) => (
-                <motion.div
-                  key={article.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  whileHover={{ y: -10 }}
-                  className="group relative"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <Link href={`/articles/${article.slug}`} className="block relative">
-                    <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden group-hover:border-blue-500/50 transition-all duration-300">
-                      <div className="relative aspect-video overflow-hidden">
-                        <img
-                          src={article.image || "/placeholder.svg"}
-                          alt={article.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
-                        {article.isPremium && (
-                          <Badge className="absolute top-4 right-4 bg-blue-500 text-white border-0">
-                            <Lock className="w-3 h-3 mr-1" />
-                            Premium
-                          </Badge>
-                        )}
-                        <div className="absolute bottom-4 left-4 right-4">
-                          <Badge variant="secondary" className="bg-slate-800/80 backdrop-blur-xl text-xs mb-2">
-                            {article.category}
-                          </Badge>
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden animate-pulse"
+                  >
+                    <div className="aspect-video bg-slate-800" />
+                    <div className="p-6 space-y-3">
+                      <div className="h-4 bg-slate-800 rounded w-3/4" />
+                      <div className="h-3 bg-slate-800 rounded w-full" />
+                      <div className="h-3 bg-slate-800 rounded w-2/3" />
+                    </div>
+                  </div>
+                ))
+              ) : articles.length > 0 ? (
+                articles.map((article, index) => (
+                  <motion.div
+                    key={article.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    whileHover={{ y: -10 }}
+                    className="group relative"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <Link
+                      href={`/articles/${article.slug}`}
+                      className="block relative"
+                    >
+                      <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden group-hover:border-blue-500/50 transition-all duration-300">
+                        <div className="relative aspect-video overflow-hidden">
+                          <img
+                            src={
+                              article.coverImage ||
+                              "/placeholder.svg?height=400&width=600&query=article"
+                            }
+                            alt={article.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
+                          {article.isPremium && (
+                            <Badge className="absolute top-4 right-4 bg-blue-500 text-white border-0">
+                              <Lock className="w-3 h-3 mr-1" />
+                              Premium
+                            </Badge>
+                          )}
+                          <div className="absolute bottom-4 left-4 right-4">
+                            <Badge
+                              variant="secondary"
+                              className="bg-slate-800/80 backdrop-blur-xl text-xs mb-2"
+                            >
+                              Article
+                            </Badge>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="p-6">
-                        <h3 className="text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-blue-400 transition-colors">
-                          {article.title}
-                        </h3>
+                        <div className="p-6">
+                          <h3 className="text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-blue-400 transition-colors">
+                            {article.title}
+                          </h3>
 
-                        <p className="text-slate-400 mb-4 line-clamp-2 text-sm leading-relaxed">{article.excerpt}</p>
+                          <p className="text-slate-400 mb-4 line-clamp-2 text-sm leading-relaxed">
+                            {article.excerpt ||
+                              article.content?.substring(0, 100)}
+                          </p>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={article.authorImage || "/placeholder.svg"}
-                              alt={article.author}
-                              className="w-8 h-8 rounded-full border-2 border-slate-700"
-                            />
-                            <div>
-                              <p className="text-sm font-medium text-white">{article.author}</p>
-                              <p className="text-xs text-slate-500">{article.readTime} read</p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={
+                                  article.author?.avatar ||
+                                  "/placeholder.svg?height=32&width=32&query=avatar"
+                                }
+                                alt={article.author?.username}
+                                className="w-8 h-8 rounded-full border-2 border-slate-700"
+                              />
+                              <div>
+                                <p className="text-sm font-medium text-white">
+                                  {article.author?.username || "Anonymous"}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  {new Date(
+                                    article.publishedAt
+                                  ).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              {article.viewCount || 0} views
                             </div>
                           </div>
-                          <div className="text-xs text-slate-500">{article.views.toLocaleString()} views</div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
+                    </Link>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-slate-400">
+                    No articles published yet. Check back soon!
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -510,62 +516,96 @@ export default function HomePage() {
                   Top Creators
                 </span>
               </h2>
-              <p className="text-slate-400 text-lg">Follow the best analysts in the Base ecosystem</p>
+              <p className="text-slate-400 text-lg">
+                Follow the best analysts in the Base ecosystem
+              </p>
             </motion.div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {topCreators.map((creator, index) => (
-                <motion.div
-                  key={creator.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  whileHover={{ y: -10, scale: 1.02 }}
-                  className="group relative"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 text-center group-hover:border-blue-500/50 transition-all duration-300">
-                    <div className="relative inline-block mb-4">
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full blur-md opacity-50 group-hover:opacity-75 transition-opacity" />
-                      <img
-                        src={creator.image || "/placeholder.svg"}
-                        alt={creator.name}
-                        className="relative w-24 h-24 rounded-full border-4 border-slate-800 group-hover:border-blue-500 transition-colors"
-                      />
-                      {creator.verified && (
+              {loading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 animate-pulse"
+                  >
+                    <div className="w-24 h-24 rounded-full bg-slate-800 mx-auto mb-4" />
+                    <div className="h-4 bg-slate-800 rounded w-3/4 mx-auto mb-2" />
+                    <div className="h-3 bg-slate-800 rounded w-full mb-4" />
+                    <div className="h-8 bg-slate-800 rounded" />
+                  </div>
+                ))
+              ) : creators.length > 0 ? (
+                creators.map((creator, index) => (
+                  <motion.div
+                    key={creator.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    whileHover={{ y: -10, scale: 1.02 }}
+                    className="group relative"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 text-center group-hover:border-blue-500/50 transition-all duration-300">
+                      <div className="relative inline-block mb-4">
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full blur-md opacity-50 group-hover:opacity-75 transition-opacity" />
+                        <img
+                          src={
+                            creator.user?.avatar ||
+                            "/placeholder.svg?height=96&width=96&query=creator"
+                          }
+                          alt={creator.user?.username}
+                          className="relative w-24 h-24 rounded-full border-4 border-slate-800 group-hover:border-blue-500 transition-colors"
+                        />
                         <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center border-4 border-slate-900">
                           <CheckCircle2 className="w-4 h-4 text-white" />
                         </div>
-                      )}
-                    </div>
-
-                    <h3 className="text-lg font-bold text-white mb-1">{creator.name}</h3>
-                    <p className="text-xs text-slate-400 mb-4 line-clamp-2 leading-relaxed">{creator.bio}</p>
-
-                    <div className="flex items-center justify-center gap-4 text-xs text-slate-500 mb-4 pb-4 border-b border-slate-800">
-                      <div className="flex items-center gap-1">
-                        <Users className="w-3 h-3" />
-                        {creator.subscribers.toLocaleString()}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <BarChart3 className="w-3 h-3" />
-                        {creator.articles}
+
+                      <h3 className="text-lg font-bold text-white mb-1">
+                        {creator.displayName}
+                      </h3>
+                      <p className="text-xs text-slate-400 mb-4 line-clamp-2 leading-relaxed">
+                        {creator.description || "Creator on Base ecosystem"}
+                      </p>
+
+                      <div className="flex items-center justify-center gap-4 text-xs text-slate-500 mb-4 pb-4 border-b border-slate-800">
+                        <div className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          {creator.subscriberCount?.toLocaleString() || 0}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <BarChart3 className="w-3 h-3" />
+                          {creator.articleCount || 0}
+                        </div>
                       </div>
+
+                      <div className="text-sm font-semibold text-blue-400 mb-3">
+                        {creator.subscriptionPrice
+                          ? `${(
+                              BigInt(creator.subscriptionPrice) /
+                              BigInt(10 ** 18)
+                            ).toString()} ETH/month`
+                          : "Free"}
+                      </div>
+
+                      <Button
+                        size="sm"
+                        className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                        asChild
+                      >
+                        <Link href={`/subscribe/${creator.id}`}>Subscribe</Link>
+                      </Button>
                     </div>
-
-                    <div className="text-sm font-semibold text-blue-400 mb-3">{creator.monthlyPrice}/month</div>
-
-                    <Button
-                      size="sm"
-                      className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
-                      asChild
-                    >
-                      <Link href={`/subscribe/${creator.id}`}>Subscribe</Link>
-                    </Button>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-slate-400">
+                    No creators yet. Be the first to join!
+                  </p>
+                </div>
+              )}
             </div>
 
             <motion.div
@@ -607,11 +647,12 @@ export default function HomePage() {
                   </span>
                 </h2>
                 <p className="text-xl text-slate-400 mb-8 max-w-2xl mx-auto leading-relaxed">
-                  Join thousands of traders and analysts using Base Analyst Daily for premium Web3 insights
+                  Join thousands of traders and analysts using Base Analyst
+                  Daily for premium Web3 insights
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <Button
+                  {/* <Button
                     size="lg"
                     className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8"
                     asChild
@@ -620,7 +661,7 @@ export default function HomePage() {
                       <Sparkles className="w-5 h-5 mr-2" />
                       Become a Creator
                     </Link>
-                  </Button>
+                  </Button> */}
                   <Button
                     size="lg"
                     variant="outline"
@@ -639,5 +680,5 @@ export default function HomePage() {
         </section>
       </main>
     </div>
-  )
+  );
 }

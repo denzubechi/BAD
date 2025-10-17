@@ -1,19 +1,25 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { CheckCircle2, Wallet, Shield, Zap, ArrowRight } from "lucide-react"
-import { useAuthStore } from "@/lib/store/auth-store"
-import { sdk } from "@/lib/base-account"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { CheckCircle2, Wallet, Shield, Zap, ArrowRight } from "lucide-react";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { sdk } from "@/lib/base-account";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface OnboardingDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onComplete: () => void
-  requiredSteps?: ("wallet" | "subaccount" | "permission")[]
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onComplete: () => void;
+  requiredSteps?: ("wallet" | "subaccount" | "permission")[];
 }
 
 export function OnboardingDialog({
@@ -32,10 +38,10 @@ export function OnboardingDialog({
     setUserId,
     setIsCreator,
     setIsPremium,
-  } = useAuthStore()
-  const [currentStep, setCurrentStep] = useState(0)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  } = useAuthStore();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const steps = [
     {
@@ -62,64 +68,65 @@ export function OnboardingDialog({
       action: setupPermission,
       completed: false,
     },
-  ].filter((step) => requiredSteps.includes(step.id as any))
+  ].filter((step) => requiredSteps.includes(step.id as any));
 
-  const progress = ((currentStep + 1) / steps.length) * 100
+  const progress = ((currentStep + 1) / steps.length) * 100;
 
   async function connectWallet() {
-    setIsProcessing(true)
-    setError(null)
+    setIsProcessing(true);
+    setError(null);
     try {
-      const provider = sdk.getProvider()
-      const accounts = await provider.request({ method: "eth_requestAccounts" })
+      const provider = sdk.getProvider();
+      const accounts = await provider.request({
+        method: "eth_requestAccounts",
+      });
 
       if (accounts && accounts.length > 0) {
-        const address = accounts[0]
-        setConnected(true)
-        setUniversalAddress(address)
+        const address = accounts[0];
+        setConnected(true);
+        setUniversalAddress(address);
 
-        // Sync with backend
         const response = await fetch("/api/auth/user", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ address }),
-        })
+        });
 
         if (response.ok) {
-          const userData = await response.json()
-          setUserId(userData.id)
-          setIsCreator(userData.isCreator)
-          setIsPremium(userData.isPremium)
+          const userData = await response.json();
+          setUserId(userData.id);
+          setIsCreator(userData.isCreator);
+          setIsPremium(userData.isPremium);
           if (userData.subAccountAddress) {
             setSubAccount({
               address: userData.subAccountAddress,
               factory: userData.subAccountFactory,
               factoryData: userData.subAccountFactoryData,
-            })
+            });
           }
         }
 
-        setCurrentStep((prev) => prev + 1)
+        setCurrentStep((prev) => prev + 1);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to connect wallet")
+      setError(err.message || "Failed to connect wallet");
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
   }
 
   async function createSubAccount() {
-    setIsProcessing(true)
-    setError(null)
+    setIsProcessing(true);
+    setError(null);
     try {
-      const provider = sdk.getProvider()
+      const provider = sdk.getProvider();
       const subAccountAddress = await provider.request({
         method: "wallet_createSubAccount",
         params: [{}],
-      })
+      });
 
       if (subAccountAddress) {
-        setSubAccount({ address: subAccountAddress as `0x${string}` })
+        setSubAccount({ address: subAccountAddress as `0x${string}` });
 
         // Sync with backend
         await fetch("/api/auth/sub-account", {
@@ -129,41 +136,43 @@ export function OnboardingDialog({
             address: universalAddress,
             subAccountAddress,
           }),
-        })
+        });
 
-        setCurrentStep((prev) => prev + 1)
+        setCurrentStep((prev) => prev + 1);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to create sub-account")
+      setError(err.message || "Failed to create sub-account");
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
   }
 
   async function setupPermission() {
-    setIsProcessing(true)
-    setError(null)
+    setIsProcessing(true);
+    setError(null);
     try {
       // This is a placeholder - actual implementation would create a spend permission
       // For now, we'll just complete the onboarding
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      onComplete()
-      onOpenChange(false)
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      onComplete();
+      onOpenChange(false);
     } catch (err: any) {
-      setError(err.message || "Failed to setup permission")
+      setError(err.message || "Failed to setup permission");
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
   }
 
-  const currentStepData = steps[currentStep]
+  const currentStepData = steps[currentStep];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-2xl">Welcome to BAD</DialogTitle>
-          <DialogDescription>Let's get you set up in just a few steps</DialogDescription>
+          <DialogDescription>
+            Let's get you set up in just a few steps
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -183,18 +192,28 @@ export function OnboardingDialog({
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold">{currentStepData.title}</h3>
-                  <p className="text-sm text-muted-foreground">{currentStepData.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {currentStepData.description}
+                  </p>
                 </div>
               </div>
 
-              {error && <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">{error}</div>}
+              {error && (
+                <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                  {error}
+                </div>
+              )}
 
               <div className="space-y-2">
                 {steps.map((step, index) => (
                   <div
                     key={step.id}
                     className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                      index < currentStep ? "bg-primary/5" : index === currentStep ? "bg-primary/10" : "bg-muted/30"
+                      index < currentStep
+                        ? "bg-primary/5"
+                        : index === currentStep
+                        ? "bg-primary/10"
+                        : "bg-muted/30"
                     }`}
                   >
                     {index < currentStep ? (
@@ -202,11 +221,19 @@ export function OnboardingDialog({
                     ) : (
                       <div
                         className={`w-5 h-5 rounded-full border-2 ${
-                          index === currentStep ? "border-primary" : "border-muted-foreground/30"
+                          index === currentStep
+                            ? "border-primary"
+                            : "border-muted-foreground/30"
                         }`}
                       />
                     )}
-                    <span className={`text-sm ${index <= currentStep ? "text-foreground" : "text-muted-foreground"}`}>
+                    <span
+                      className={`text-sm ${
+                        index <= currentStep
+                          ? "text-foreground"
+                          : "text-muted-foreground"
+                      }`}
+                    >
                       {step.title}
                     </span>
                   </div>
@@ -238,5 +265,5 @@ export function OnboardingDialog({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

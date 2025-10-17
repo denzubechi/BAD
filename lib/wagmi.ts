@@ -7,7 +7,7 @@ export function getConfig() {
     chains: [baseSepolia],
     connectors: [
       baseAccount({
-        appName: "Base Ecosystem App",
+        appName: "Base Analyst Daily",
         subAccounts: {
           creation: "on-connect",
           defaultAccount: "sub",
