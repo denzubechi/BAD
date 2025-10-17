@@ -1,12 +1,18 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useAuthStore } from "@/lib/store/auth-store"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Spinner } from "@/components/ui/spinner"
-import { Users, Calendar, CreditCard, XCircle } from "lucide-react"
+import { useEffect, useState } from "react";
+import { useAuthStore } from "@/lib/store/auth-store";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
+import { Users, Calendar, CreditCard, XCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,94 +23,94 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 
 interface Subscription {
-  id: string
-  status: string
-  startDate: string
-  endDate: string | null
-  nextRenewalDate: string | null
+  id: string;
+  status: string;
+  startDate: string;
+  endDate: string | null;
+  nextRenewalDate: string | null;
   creator: {
-    id: string
-    displayName: string
-    description: string | null
-    subscriptionPrice: string
-    subscriberCount: number
+    id: string;
+    displayName: string;
+    description: string | null;
+    subscriptionPrice: string;
+    subscriberCount: number;
     user: {
-      username: string | null
-      avatar: string | null
-      address: string
-    }
-  }
+      username: string | null;
+      avatar: string | null;
+      address: string;
+    };
+  };
 }
 
 export function SubscriptionList() {
-  const { userId } = useAuthStore()
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { userId } = useAuthStore();
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (userId) {
-      loadSubscriptions()
+      loadSubscriptions();
     }
-  }, [userId])
+  }, [userId]);
 
   const loadSubscriptions = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const response = await fetch(`/api/subscriptions?subscriberId=${userId}`)
+      const response = await fetch(`/api/subscriptions?subscriberId=${userId}`);
       if (response.ok) {
-        const data = await response.json()
-        setSubscriptions(data.subscriptions)
+        const data = await response.json();
+        setSubscriptions(data.subscriptions);
       }
     } catch (error) {
-      console.error("[v0] Error loading subscriptions:", error)
+      console.error("[v0] Error loading subscriptions:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const cancelSubscription = async (id: string) => {
     try {
       const response = await fetch(`/api/subscriptions/${id}/cancel`, {
         method: "POST",
-      })
+      });
       if (response.ok) {
-        loadSubscriptions()
+        loadSubscriptions();
       }
     } catch (error) {
-      console.error("[v0] Error canceling subscription:", error)
+      console.error("[v0] Error canceling subscription:", error);
     }
-  }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "ACTIVE":
-        return <Badge variant="default">Active</Badge>
+        return <Badge variant="default">Active</Badge>;
       case "EXPIRED":
-        return <Badge variant="secondary">Expired</Badge>
+        return <Badge variant="secondary">Expired</Badge>;
       case "CANCELLED":
-        return <Badge variant="destructive">Cancelled</Badge>
+        return <Badge variant="destructive">Cancelled</Badge>;
       case "PENDING":
-        return <Badge variant="outline">Pending</Badge>
+        return <Badge variant="outline">Pending</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>
+        return <Badge variant="outline">{status}</Badge>;
     }
-  }
+  };
 
   const formatPrice = (price: string) => {
-    const value = BigInt(price)
-    const eth = Number(value) / 1e18
-    return eth.toFixed(6)
-  }
+    const value = BigInt(price);
+    const eth = Number(value) / 1e18;
+    return eth.toFixed(6);
+  };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Spinner className="w-8 h-8" />
       </div>
-    )
+    );
   }
 
   if (subscriptions.length === 0) {
@@ -115,7 +121,8 @@ export function SubscriptionList() {
             <Users className="w-12 h-12 mx-auto text-muted-foreground" />
             <h3 className="text-lg font-semibold">No Subscriptions</h3>
             <p className="text-sm text-muted-foreground">
-              You haven't subscribed to any creators yet. Explore creators to get started.
+              You haven't subscribed to any creators yet. Explore creators to
+              get started.
             </p>
             <Button asChild>
               <a href="/explore">Discover Creators</a>
@@ -123,7 +130,7 @@ export function SubscriptionList() {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -143,9 +150,13 @@ export function SubscriptionList() {
                   <div className="w-12 h-12 rounded-full bg-primary/10" />
                 )}
                 <div className="space-y-1">
-                  <CardTitle className="text-lg">{subscription.creator.displayName}</CardTitle>
+                  <CardTitle className="text-lg">
+                    {subscription.creator.displayName}
+                  </CardTitle>
                   {subscription.creator.description && (
-                    <CardDescription>{subscription.creator.description}</CardDescription>
+                    <CardDescription>
+                      {subscription.creator.description}
+                    </CardDescription>
                   )}
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Users className="w-4 h-4" />
@@ -162,7 +173,7 @@ export function SubscriptionList() {
                 <p className="text-muted-foreground">Price</p>
                 <p className="font-semibold flex items-center gap-1">
                   <CreditCard className="w-4 h-4" />
-                  {formatPrice(subscription.creator.subscriptionPrice)} / month
+                  {subscription.creator.subscriptionPrice} USD/ month
                 </p>
               </div>
               <div>
@@ -177,7 +188,9 @@ export function SubscriptionList() {
                   <p className="text-muted-foreground">Next Renewal</p>
                   <p className="font-semibold flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    {new Date(subscription.nextRenewalDate).toLocaleDateString()}
+                    {new Date(
+                      subscription.nextRenewalDate
+                    ).toLocaleDateString()}
                   </p>
                 </div>
               )}
@@ -199,13 +212,16 @@ export function SubscriptionList() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Cancel Subscription</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to cancel your subscription to {subscription.creator.displayName}? You
-                        will lose access to their premium content.
+                        Are you sure you want to cancel your subscription to{" "}
+                        {subscription.creator.displayName}? You will lose access
+                        to their premium content.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => cancelSubscription(subscription.id)}>
+                      <AlertDialogAction
+                        onClick={() => cancelSubscription(subscription.id)}
+                      >
                         Cancel Subscription
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -217,5 +233,5 @@ export function SubscriptionList() {
         </Card>
       ))}
     </div>
-  )
+  );
 }
