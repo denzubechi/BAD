@@ -12,9 +12,9 @@ datasource db {
 
 model User {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  address           String   @unique // Base Account address
-  universalAddress  String?  // Universal account address
-  subAccountAddress String?  // Sub-account address
+  address           String   @unique 
+  universalAddress  String?  
+  subAccountAddress String?  
   subAccountFactory String?
   subAccountFactoryData String?
   username          String?  @unique
@@ -26,7 +26,6 @@ model User {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  // Relations
   articles          Article[]
   subscriptions     Subscription[]
   spendPermissions  SpendPermission[]

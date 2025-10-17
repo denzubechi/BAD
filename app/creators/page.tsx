@@ -47,7 +47,7 @@ export default function CreatorsPage() {
         setCreators(data.creators || []);
       }
     } catch (error) {
-      console.error("[v0] Error loading creators:", error);
+      console.error(" Error loading creators:", error);
     } finally {
       setIsLoading(false);
     }

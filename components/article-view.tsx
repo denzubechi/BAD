@@ -9,7 +9,6 @@ import { Eye, Calendar, Clock, ArrowLeft, Share2 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { PremiumContentGate } from "./premium-content-gate";
-import { ConnectWallet } from "./connect-wallet";
 import { getInitials } from "@/lib/utils";
 
 interface Article {
@@ -42,7 +41,7 @@ export function ArticleView({ article }: ArticleViewProps) {
   const [hasAccess, setHasAccess] = useState(false);
   const [isCheckingAccess, setIsCheckingAccess] = useState(true);
   const isAuthor = userId === article.author.id;
-
+  console.log(article);
   useEffect(() => {
     checkAccess();
   }, [userId, isPremium, article.id, article.author.id]);
@@ -50,21 +49,18 @@ export function ArticleView({ article }: ArticleViewProps) {
   const checkAccess = async () => {
     setIsCheckingAccess(true);
 
-    // Author always has access
     if (isAuthor) {
       setHasAccess(true);
       setIsCheckingAccess(false);
       return;
     }
 
-    // Non-premium articles are accessible to everyone
     if (!article.isPremium) {
       setHasAccess(true);
       setIsCheckingAccess(false);
       return;
     }
 
-    // For premium articles, check if user has active subscription
     if (userId) {
       try {
         const response = await fetch(

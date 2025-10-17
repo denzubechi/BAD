@@ -347,7 +347,7 @@ export default function ExplorePage() {
 
                       <div className="flex items-center justify-between pt-4 border-t border-border">
                         <span className="text-sm font-medium">
-                          {formatPrice(creator.subscriptionPrice)}
+                          {creator.subscriptionPrice} USD/month
                         </span>
                         <Button size="sm" asChild>
                           <Link href={`/subscribe/${creator.id}`}>
