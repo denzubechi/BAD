@@ -1,6 +1,6 @@
 "use client";
 
-import { useAccount } from "wagmi";
+import { useAccount, useBalance, useConnections } from "wagmi";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,13 +11,69 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
-import { User, FileText, CreditCard, Settings } from "lucide-react";
+import { User, FileText, CreditCard, Settings, Droplet } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { USDC } from "@/lib/usdc";
+import { useFaucet } from "@/hooks/use-faucet";
+import { useFaucetEligibility } from "@/hooks/use-faucet-eligibility";
+import { toast } from "sonner";
+import { useMemo, useCallback } from "react";
 
 export default function DashboardPage() {
   const { isConnected } = useAccount();
   const { universalAddress, isCreator, isPremium } = useAuthStore();
+  const connections = useConnections();
+
+  const [_subAccount, universalAccount] = useMemo(() => {
+    return connections.flatMap((connection) => connection.accounts);
+  }, [connections]);
+
+  const { data: balance } = useBalance({
+    address: universalAccount,
+    token: USDC.address,
+    query: {
+      refetchInterval: 5000,
+      enabled: !!universalAccount,
+    },
+  });
+
+  const faucetEligibility = useFaucetEligibility(balance?.value);
+  const faucetMutation = useFaucet();
+
+  const handleFundAccount = useCallback(async () => {
+    if (!universalAccount) {
+      toast.error("No universal account found");
+      return;
+    }
+
+    if (!faucetEligibility.isEligible) {
+      toast.error("Not eligible for faucet", {
+        description: faucetEligibility.reason,
+      });
+      return;
+    }
+
+    const fundingToastId = toast.loading("Requesting USDC from faucet...");
+
+    faucetMutation.mutate(
+      { address: universalAccount },
+      {
+        onSuccess: (data) => {
+          toast.dismiss(fundingToastId);
+          toast.success("Account funded successfully!");
+        },
+        onError: (error) => {
+          toast.dismiss(fundingToastId);
+          const errorMessage =
+            error instanceof Error ? error.message : "Please try again later";
+          toast.error("Failed to fund account", {
+            description: errorMessage,
+          });
+        },
+      }
+    );
+  }, [universalAccount, faucetMutation, faucetEligibility]);
 
   if (!isConnected) {
     return (
@@ -126,33 +182,58 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-8 p-6 rounded-lg border border-border bg-card">
-          <h2 className="text-lg font-semibold mb-2">Account Status</h2>
-          <div className="space-y-2 text-sm">
-            <p>
-              <span className="text-muted-foreground">Wallet:</span>{" "}
-              <span className="font-mono">{universalAddress}</span>
-            </p>
-            <p>
-              <span className="text-muted-foreground">Creator Status:</span>{" "}
-              <span
+          <h2 className="text-lg font-semibold mb-4">Account Status</h2>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-muted-foreground">Wallet Address</p>
+              <p className="font-mono text-sm mt-1">{universalAddress}</p>
+            </div>
+            {balance && (
+              <div>
+                <p className="text-sm text-muted-foreground">USDC Balance</p>
+                <p className="font-mono text-sm mt-1">
+                  {Number.parseFloat(balance.formatted).toFixed(2)}{" "}
+                  {balance.symbol}
+                </p>
+              </div>
+            )}
+            <div>
+              <p className="text-sm text-muted-foreground">Creator Status</p>
+              <p
                 className={
-                  isCreator ? "text-green-500" : "text-muted-foreground"
+                  isCreator
+                    ? "text-green-500 text-sm"
+                    : "text-muted-foreground text-sm"
                 }
               >
                 {isCreator ? "Active" : "Not a creator"}
-              </span>
-            </p>
-            <p>
-              <span className="text-muted-foreground">Premium Status:</span>{" "}
-              <span
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Premium Status</p>
+              <p
                 className={
-                  isPremium ? "text-green-500" : "text-muted-foreground"
+                  isPremium
+                    ? "text-green-500 text-sm"
+                    : "text-muted-foreground text-sm"
                 }
               >
                 {isPremium ? "Active" : "Free tier"}
-              </span>
-            </p>
+              </p>
+            </div>
           </div>
+
+          <Button
+            onClick={handleFundAccount}
+            disabled={faucetMutation.isPending || !faucetEligibility.isEligible}
+            className="mt-4 w-full bg-transparent"
+            variant="outline"
+          >
+            <Droplet className="w-4 h-4 mr-2" />
+            {faucetMutation.isPending
+              ? "Funding..."
+              : "Fund Account with Test USDC"}
+          </Button>
         </div>
       </main>
     </div>

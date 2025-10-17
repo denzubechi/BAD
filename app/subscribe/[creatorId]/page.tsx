@@ -1,12 +1,9 @@
 "use client";
 
-import { use, useEffect, useState, useCallback } from "react";
+import { use, useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import {
-  useAccount,
-  useSendTransaction,
-  useWaitForTransactionReceipt,
-} from "wagmi";
+import { useAccount, useConnections, useBalance } from "wagmi";
+import { createBaseAccountSDK } from "@base-org/account";
 import { useAuthStore } from "@/lib/store/auth-store";
 import {
   Card,
@@ -28,10 +25,7 @@ import {
 import { encodeFunctionData, parseUnits } from "viem";
 import { USDC, erc20Abi } from "@/lib/usdc";
 import { toast } from "sonner";
-
-type SendTransactionFn = ReturnType<
-  typeof useSendTransaction
->["sendTransaction"];
+import { baseSepolia } from "viem/chains";
 
 interface Creator {
   id: string;
@@ -47,6 +41,16 @@ interface Creator {
   };
 }
 
+interface WalletAddSubAccountResponse {
+  address: `0x${string}`;
+  factory?: `0x${string}`;
+  factoryData?: `0x${string}`;
+}
+
+interface GetSubAccountsResponse {
+  subAccounts: WalletAddSubAccountResponse[];
+}
+
 function SubscribeContent({
   params,
 }: {
@@ -54,28 +58,59 @@ function SubscribeContent({
 }) {
   const { creatorId } = use(params);
   const router = useRouter();
-  const { isConnected } = useAccount();
-  const { userId, subAccount } = useAuthStore();
+  const { address } = useAccount();
+  const { userId } = useAuthStore();
+  const connections = useConnections();
+
+  const [_subAccount, universalAccount] = useMemo(() => {
+    return connections.flatMap((connection) => connection.accounts);
+  }, [connections]);
+
+  const [provider, setProvider] = useState<ReturnType<
+    ReturnType<typeof createBaseAccountSDK>["getProvider"]
+  > | null>(null);
+
   const [creator, setCreator] = useState<Creator | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState("");
   const [statusType, setStatusType] = useState<"success" | "error" | "info">(
     "info"
   );
+  const [subAccount, setSubAccount] =
+    useState<WalletAddSubAccountResponse | null>(null);
+  const [isCreatingSubAccount, setIsCreatingSubAccount] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
-  const {
-    sendTransaction,
-    data: hash,
-    isPending: isTransactionPending,
-    reset: resetTransaction,
-  } = useSendTransaction();
-
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-    });
+  const { data: balance } = useBalance({
+    address: universalAccount,
+    token: USDC.address,
+    query: {
+      refetchInterval: 5000,
+      enabled: !!universalAccount,
+    },
+  });
 
   const [hasLoadedCreator, setHasLoadedCreator] = useState(false);
+
+  useEffect(() => {
+    const initializeSDK = async () => {
+      try {
+        const sdkInstance = createBaseAccountSDK({
+          appName: "Base Ecosystem App",
+          appChainIds: [baseSepolia.id],
+        });
+
+        const providerInstance = sdkInstance.getProvider();
+        setProvider(providerInstance);
+      } catch (error) {
+        console.error("[v0] SDK initialization failed:", error);
+        setStatus("SDK initialization failed");
+        setStatusType("error");
+      }
+    };
+
+    initializeSDK();
+  }, []);
 
   useEffect(() => {
     if (!hasLoadedCreator) {
@@ -84,6 +119,35 @@ function SubscribeContent({
     }
   }, [creatorId, hasLoadedCreator]);
 
+  useEffect(() => {
+    if (provider && universalAccount && !subAccount) {
+      checkExistingSubAccount();
+    }
+  }, [provider, universalAccount]);
+
+  const checkExistingSubAccount = async () => {
+    if (!provider || !universalAccount) return;
+
+    try {
+      const response = (await provider.request({
+        method: "wallet_getSubAccounts",
+        params: [
+          {
+            account: universalAccount,
+            domain: window.location.origin,
+          },
+        ],
+      })) as GetSubAccountsResponse;
+
+      const existing = response.subAccounts[0];
+      if (existing) {
+        setSubAccount(existing);
+      }
+    } catch (error) {
+      console.error("[v0] Error checking sub-account:", error);
+    }
+  };
+
   const loadCreator = async () => {
     setIsLoading(true);
     try {
@@ -91,8 +155,6 @@ function SubscribeContent({
       if (response.ok) {
         const data = await response.json();
         setCreator(data.creator);
-      } else {
-        throw new Error("Failed to fetch creator");
       }
     } catch (error) {
       console.error("[v0] Error loading creator:", error);
@@ -103,13 +165,60 @@ function SubscribeContent({
     }
   };
 
-  const subscribe = useCallback(async () => {
-    if (!subAccount || !creator) {
-      setStatus("You need to create a sub-account first");
+  const createSubAccount = async () => {
+    if (!provider) {
+      setStatus("Provider not initialized");
       setStatusType("error");
       return;
     }
 
+    setIsCreatingSubAccount(true);
+    setStatus("Creating sub-account...");
+    setStatusType("info");
+
+    try {
+      const newSubAccount = (await provider.request({
+        method: "wallet_addSubAccount",
+        params: [
+          {
+            account: {
+              type: "create",
+            },
+          },
+        ],
+      })) as WalletAddSubAccountResponse;
+
+      setSubAccount(newSubAccount);
+      setStatus("Sub-account created successfully!");
+      setStatusType("success");
+
+      await fetch("/api/auth/sub-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: address,
+          subAccountAddress: newSubAccount.address,
+          subAccountFactory: newSubAccount.factory,
+          subAccountFactoryData: newSubAccount.factoryData,
+        }),
+      });
+    } catch (error) {
+      console.error("[v0] Error creating sub-account:", error);
+      setStatus("Failed to create sub-account. Please try again.");
+      setStatusType("error");
+    } finally {
+      setIsCreatingSubAccount(false);
+    }
+  };
+
+  const subscribe = useCallback(async () => {
+    if (!provider || !subAccount || !creator) {
+      setStatus("Sub-account or creator not available");
+      setStatusType("error");
+      return;
+    }
+
+    setIsSubscribing(true);
     setStatus("Sending subscription payment...");
     setStatusType("info");
 
@@ -123,59 +232,66 @@ function SubscribeContent({
         ],
       });
 
-      sendTransaction({
-        to: USDC.address,
-        data,
-        value: BigInt(0),
-      });
+      const callsId = (await provider.request({
+        method: "wallet_sendCalls",
+        params: [
+          {
+            version: "2.0",
+            atomicRequired: true,
+            chainId: `0x${baseSepolia.id.toString(16)}`,
+            from: subAccount.address,
+            calls: [
+              {
+                to: USDC.address,
+                data,
+                value: "0x0",
+              },
+            ],
+            capabilities: {},
+          },
+        ],
+      })) as string;
+
+      setStatus("Subscription payment sent!");
+      setStatusType("success");
 
       toast.loading("Processing subscription payment...", {
         description: `Subscribing to ${creator.displayName}`,
       });
-    } catch (error) {
-      console.error("[v0] Error creating subscription:", error);
-      setStatus("Failed to create subscription. Check your wallet.");
-      setStatusType("error");
-      toast.error("Transaction failed or was rejected.");
-    }
-  }, [subAccount, creator, sendTransaction]);
 
-  useEffect(() => {
-    if (isConfirmed && creator) {
-      fetch("/api/subscriptions/create", {
+      // Create subscription in DB
+      const subscriptionResponse = await fetch("/api/subscriptions/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           subscriberId: userId,
           creatorId: creator.id,
         }),
-      }).then((response) => {
-        if (response.ok) {
-          toast.success("Subscription created successfully!");
-          setStatus("Subscription successful!");
-          setStatusType("success");
-          setTimeout(() => {
-            router.push("/subscriptions");
-          }, 1500);
-        } else {
-          toast.error(
-            "Transaction successful, but backend failed to record subscription."
-          );
-          setStatus(
-            "Payment confirmed, but subscription setup failed on server."
-          );
-          setStatusType("error");
-        }
       });
 
-      resetTransaction();
+      if (subscriptionResponse.ok) {
+        toast.success("Subscription created successfully!");
+        setTimeout(() => {
+          router.push("/subscriptions");
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("[v0] Error creating subscription:", error);
+      setStatus("Failed to create subscription");
+      setStatusType("error");
+      toast.error("Subscription failed", {
+        description:
+          error instanceof Error ? error.message : "Please try again",
+      });
+    } finally {
+      setIsSubscribing(false);
     }
-  }, [isConfirmed, creator, userId, router, resetTransaction]);
+  }, [provider, subAccount, creator, userId, router]);
 
   const formatPrice = (price: string) => {
     const value = BigInt(price);
-    const usd = Number(value) / 1e6;
-    return usd.toFixed(2) + " USDC";
+    const eth = Number(value) / 1e18;
+    return eth.toFixed(6);
   };
 
   if (isLoading) {
@@ -224,7 +340,7 @@ function SubscribeContent({
                 {creator.user.avatar ? (
                   <img
                     src={creator.user.avatar || "/placeholder.svg"}
-                    alt={`${creator.displayName} avatar`}
+                    alt=""
                     className="w-16 h-16 rounded-full"
                   />
                 ) : (
@@ -263,6 +379,22 @@ function SubscribeContent({
                 </div>
               </div>
 
+              {balance && (
+                <div className="p-4 rounded-lg border border-border bg-muted/50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Your USDC Balance
+                      </p>
+                      <p className="text-lg font-semibold">
+                        {Number.parseFloat(balance.formatted).toFixed(2)}{" "}
+                        {balance.symbol}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="p-4 rounded-lg border border-border bg-muted/50">
                 <h3 className="font-semibold mb-2">What you'll get:</h3>
                 <ul className="space-y-2 text-sm text-muted-foreground">
@@ -272,7 +404,7 @@ function SubscribeContent({
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    Exclusive content and analysis
+                    Exclusive trading signals and market analysis
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -289,33 +421,52 @@ function SubscribeContent({
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    You need to **create a sub-account** before subscribing.{" "}
-                    <a href="/sub-account" className="underline font-medium">
-                      Create one now
-                    </a>
+                    You need to create a sub-account to subscribe. This enables
+                    automated payments.
                   </AlertDescription>
                 </Alert>
               )}
 
-              <Button
-                onClick={subscribe}
-                disabled={isTransactionPending || isConfirming || !subAccount}
-                className="w-full"
-                size="lg"
-              >
-                {isTransactionPending || isConfirming ? (
-                  <>
-                    <Spinner className="w-4 h-4 mr-2" />
-                    {isTransactionPending ? "Confirming..." : "Processing..."}
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Subscribe for {formatPrice(creator.subscriptionPrice)} /
-                    month
-                  </>
-                )}
-              </Button>
+              {!subAccount ? (
+                <Button
+                  onClick={createSubAccount}
+                  disabled={isCreatingSubAccount || !provider}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isCreatingSubAccount ? (
+                    <>
+                      <Spinner className="w-4 h-4 mr-2" />
+                      Initializing subscription...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Initialize subscription
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  onClick={subscribe}
+                  disabled={isSubscribing}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isSubscribing ? (
+                    <>
+                      <Spinner className="w-4 h-4 mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Subscribe for {formatPrice(creator.subscriptionPrice)} /
+                      month
+                    </>
+                  )}
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

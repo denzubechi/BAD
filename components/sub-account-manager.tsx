@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useAuthStore } from "@/lib/store/auth-store";
-import { useAccount, useWalletClient } from "wagmi";
+import { useCallback, useEffect, useState, useMemo } from "react";
+import { useAccount, useConnections } from "wagmi";
+import { createBaseAccountSDK } from "@base-org/account";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +17,7 @@ import { Wallet, Plus, Send, CheckCircle2, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { baseSepolia } from "viem/chains";
-import { createBaseAccountSDK } from "@base-org/account";
+
 interface SubAccount {
   address: `0x${string}`;
   factory?: `0x${string}`;
@@ -35,12 +35,18 @@ interface WalletAddSubAccountResponse {
 }
 
 export function SubAccountManager() {
-  const { universalAddress, subAccount, setSubAccount } = useAuthStore();
   const { address } = useAccount();
+  const connections = useConnections();
+
+  const [_subAccount, universalAccount] = useMemo(() => {
+    return connections.flatMap((connection) => connection.accounts);
+  }, [connections]);
+
   const [provider, setProvider] = useState<ReturnType<
     ReturnType<typeof createBaseAccountSDK>["getProvider"]
   > | null>(null);
-  const { data: walletClient } = useWalletClient();
+
+  const [subAccount, setSubAccount] = useState<SubAccount | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState("");
   const [statusType, setStatusType] = useState<"success" | "error" | "info">(
@@ -52,20 +58,40 @@ export function SubAccountManager() {
   const [testCallData, setTestCallData] = useState("0x9846cd9e");
 
   useEffect(() => {
-    if (walletClient && address && !subAccount) {
+    const initializeSDK = async () => {
+      try {
+        const sdkInstance = createBaseAccountSDK({
+          appName: "Base Ecosystem App",
+          appChainIds: [baseSepolia.id],
+        });
+
+        const providerInstance = sdkInstance.getProvider();
+        setProvider(providerInstance);
+      } catch (error) {
+        console.error("[v0] SDK initialization failed:", error);
+        setStatus("SDK initialization failed");
+        setStatusType("error");
+      }
+    };
+
+    initializeSDK();
+  }, []);
+
+  useEffect(() => {
+    if (provider && universalAccount && !subAccount) {
       checkExistingSubAccount();
     }
-  }, [walletClient, address]);
+  }, [provider, universalAccount]);
 
   const checkExistingSubAccount = async () => {
-    if (!provider || !address) return;
+    if (!provider || !universalAccount) return;
 
     try {
       const response = (await provider.request({
         method: "wallet_getSubAccounts",
         params: [
           {
-            account: address,
+            account: universalAccount,
             domain: window.location.origin,
           },
         ],
@@ -79,7 +105,7 @@ export function SubAccountManager() {
         setStatusType("success");
       }
     } catch (error) {
-      console.error("Error checking sub-account:", error);
+      console.error("[v0] Error checking sub-account:", error);
     }
   };
 
@@ -89,20 +115,20 @@ export function SubAccountManager() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          address: address,
+          address: universalAccount,
           subAccountAddress: account.address,
           subAccountFactory: account.factory,
           subAccountFactoryData: account.factoryData,
         }),
       });
     } catch (error) {
-      console.error("Error updating sub-account in DB:", error);
+      console.error("[v0] Error updating sub-account in DB:", error);
     }
   };
 
   const createSubAccount = async () => {
     if (!provider) {
-      setStatus("Wallet not connected");
+      setStatus("Provider not initialized");
       setStatusType("error");
       return;
     }
@@ -128,7 +154,7 @@ export function SubAccountManager() {
       setStatus("Sub-account created successfully!");
       setStatusType("success");
     } catch (error) {
-      console.error("Sub-account creation failed:", error);
+      console.error("[v0] Sub-account creation failed:", error);
       setStatus("Sub-account creation failed. Please try again.");
       setStatusType("error");
     } finally {
@@ -170,19 +196,19 @@ export function SubAccountManager() {
         ],
       })) as string;
 
-      setStatus(`Transaction sent! Calls ID: ${callsId}`);
+      setStatus(`Transaction sent!`);
       setStatusType("success");
     } catch (error) {
-      console.error("Send calls failed:", error);
+      console.error("[v0] Send calls failed:", error);
       setStatus("Transaction failed. Please try again.");
       setStatusType("error");
     } finally {
       setIsLoading(false);
     }
-  }, [walletClient, subAccount, testCallTo, testCallData]);
+  }, [provider, subAccount, testCallTo, testCallData]);
 
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
   return (
@@ -255,7 +281,7 @@ export function SubAccountManager() {
           <CardContent>
             <Button
               onClick={createSubAccount}
-              disabled={isLoading || !walletClient}
+              disabled={isLoading || !provider}
               className="w-full"
             >
               {isLoading ? (
@@ -308,7 +334,7 @@ export function SubAccountManager() {
             </div>
             <Button
               onClick={sendTestCall}
-              disabled={isLoading || !walletClient}
+              disabled={isLoading || !provider}
               className="w-full"
             >
               {isLoading ? (

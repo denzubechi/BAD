@@ -2,9 +2,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 interface SubAccount {
-  address: `0x${string}`;
-  factory?: `0x${string}`;
-  factoryData?: `0x${string}`;
+  address: string;
+  factory?: string;
+  factoryData?: string;
 }
 
 interface AuthState {
