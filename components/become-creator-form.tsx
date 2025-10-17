@@ -19,9 +19,11 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
-
+import { useAccount } from "wagmi";
 export function BecomeCreatorForm() {
   const router = useRouter();
+
+  const { address, isConnected } = useAccount();
   const { userId, setIsCreator } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState("");
@@ -38,7 +40,7 @@ export function BecomeCreatorForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!displayName || !subscriptionPrice || !tokenAddress) {
+    if (!displayName || !subscriptionPrice || !address) {
       setStatus("Please fill in all required fields");
       setStatusType("error");
       return;
@@ -57,7 +59,7 @@ export function BecomeCreatorForm() {
           displayName,
           description: description || null,
           subscriptionPrice,
-          tokenAddress,
+          tokenAddress: address || "0x0000000000000000000000000000000000000000",
         }),
       });
 
@@ -142,7 +144,7 @@ export function BecomeCreatorForm() {
               </p>
             </div>
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="tokenAddress">Token Address *</Label>
               <Input
                 id="tokenAddress"
@@ -155,7 +157,7 @@ export function BecomeCreatorForm() {
               <p className="text-xs text-muted-foreground">
                 The token address you want to receive payments in
               </p>
-            </div>
+            </div> */}
 
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? (
