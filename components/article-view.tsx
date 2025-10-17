@@ -99,25 +99,6 @@ export function ArticleView({ article }: ArticleViewProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <motion.header
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl"
-      >
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
-
-          <ConnectWallet />
-        </div>
-      </motion.header>
-
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Cover Image */}
         {article.coverImage && (
