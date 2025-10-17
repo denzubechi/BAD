@@ -230,13 +230,14 @@ export function ArticleView({ article }: ArticleViewProps) {
                 <div className="flex items-center gap-6">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center text-white font-bold text-2xl">
                     {getInitials(
-                      article.author.username || article.author.address
+                      article.author.creatorProfile.displayName ||
+                        article.author.address
                     )}
                   </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2">
                       Written by{" "}
-                      {article.author.username ||
+                      {article.author.creatorProfile.displayName ||
                         `${article.author.address.slice(
                           0,
                           6
