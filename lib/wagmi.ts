@@ -8,10 +8,7 @@ export function getConfig() {
     connectors: [
       baseAccount({
         appName: "Base Analyst Daily",
-        // subAccounts: {
-        //   creation: "on-connect",
-        //   defaultAccount: "sub",
-        // },
+
         paymasterUrls: {
           [baseSepolia.id]: process.env
             .NEXT_PUBLIC_PAYMASTER_SERVICE_URL as string,

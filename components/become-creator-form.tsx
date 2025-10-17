@@ -1,44 +1,52 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAuthStore } from "@/lib/store/auth-store"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Spinner } from "@/components/ui/spinner"
-import { CheckCircle2, AlertCircle, Sparkles } from "lucide-react"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
+import { CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 
 export function BecomeCreatorForm() {
-  const router = useRouter()
-  const { userId, setIsCreator } = useAuthStore()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [status, setStatus] = useState("")
-  const [statusType, setStatusType] = useState<"success" | "error" | "info">("info")
+  const router = useRouter();
+  const { userId, setIsCreator } = useAuthStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState("");
+  const [statusType, setStatusType] = useState<"success" | "error" | "info">(
+    "info"
+  );
 
   // Form state
-  const [displayName, setDisplayName] = useState("")
-  const [description, setDescription] = useState("")
-  const [subscriptionPrice, setSubscriptionPrice] = useState("")
-  const [tokenAddress, setTokenAddress] = useState("")
+  const [displayName, setDisplayName] = useState("");
+  const [description, setDescription] = useState("");
+  const [subscriptionPrice, setSubscriptionPrice] = useState("");
+  const [tokenAddress, setTokenAddress] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!displayName || !subscriptionPrice || !tokenAddress) {
-      setStatus("Please fill in all required fields")
-      setStatusType("error")
-      return
+      setStatus("Please fill in all required fields");
+      setStatusType("error");
+      return;
     }
 
-    setIsSubmitting(true)
-    setStatus("Creating creator profile...")
-    setStatusType("info")
+    setIsSubmitting(true);
+    setStatus("Creating creator profile...");
+    setStatusType("info");
 
     try {
       const response = await fetch("/api/creators/create", {
@@ -51,28 +59,28 @@ export function BecomeCreatorForm() {
           subscriptionPrice,
           tokenAddress,
         }),
-      })
+      });
 
       if (response.ok) {
-        setStatus("Creator profile created successfully!")
-        setStatusType("success")
-        setIsCreator(true)
+        setStatus("Creator profile created successfully!");
+        setStatusType("success");
+        setIsCreator(true);
         setTimeout(() => {
-          router.push("/creator/dashboard")
-        }, 1500)
+          router.push("/creator/dashboard");
+        }, 1500);
       } else {
-        const error = await response.json()
-        setStatus(error.error || "Failed to create creator profile")
-        setStatusType("error")
+        const error = await response.json();
+        setStatus(error.error || "Failed to create creator profile");
+        setStatusType("error");
       }
     } catch (error) {
-      console.error("[v0] Error creating creator profile:", error)
-      setStatus("Failed to create creator profile")
-      setStatusType("error")
+      console.error("[v0] Error creating creator profile:", error);
+      setStatus("Failed to create creator profile");
+      setStatusType("error");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -90,7 +98,9 @@ export function BecomeCreatorForm() {
             <Sparkles className="w-5 h-5" />
             Start Your Creator Journey
           </CardTitle>
-          <CardDescription>Set up your creator profile and start monetizing your content</CardDescription>
+          <CardDescription>
+            Set up your creator profile and start monetizing your content
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -117,7 +127,9 @@ export function BecomeCreatorForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="subscriptionPrice">Subscription Price (in wei) *</Label>
+              <Label htmlFor="subscriptionPrice">
+                Subscription Price (in usd) *
+              </Label>
               <Input
                 id="subscriptionPrice"
                 placeholder="1000000000000000000"
@@ -125,7 +137,9 @@ export function BecomeCreatorForm() {
                 onChange={(e) => setSubscriptionPrice(e.target.value)}
                 required
               />
-              <p className="text-xs text-muted-foreground">Example: 1000000000000000000 wei = 1 token per month</p>
+              <p className="text-xs text-muted-foreground">
+                Example: 1 usd per month
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -138,7 +152,9 @@ export function BecomeCreatorForm() {
                 className="font-mono text-sm"
                 required
               />
-              <p className="text-xs text-muted-foreground">The ERC20 token address you want to receive payments in</p>
+              <p className="text-xs text-muted-foreground">
+                The token address you want to receive payments in
+              </p>
             </div>
 
             <Button type="submit" disabled={isSubmitting} className="w-full">
@@ -165,7 +181,9 @@ export function BecomeCreatorForm() {
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <ul className="list-disc list-inside space-y-2 ml-2">
             <li>Publish unlimited premium articles</li>
-            <li>Receive automated subscription payments via spend permissions</li>
+            <li>
+              Receive automated subscription payments via spend permissions
+            </li>
             <li>Build a loyal subscriber base</li>
             <li>Track your earnings and subscriber growth</li>
             <li>Full control over your content and pricing</li>
@@ -173,5 +191,5 @@ export function BecomeCreatorForm() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

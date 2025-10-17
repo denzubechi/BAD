@@ -582,10 +582,7 @@ export default function HomePage() {
 
                       <div className="text-sm font-semibold text-blue-400 mb-3">
                         {creator.subscriptionPrice
-                          ? `${(
-                              BigInt(creator.subscriptionPrice) /
-                              BigInt(10 ** 18)
-                            ).toString()} ETH/month`
+                          ? `${creator.subscriptionPrice} USD/month`
                           : "Free"}
                       </div>
 
