@@ -460,7 +460,7 @@ function SubscribeContent({
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4 mr-2" />
-                      Subscribe for {creator.subscriptionPrice} / month
+                      Subscribe for {creator.subscriptionPrice} USD/ month
                     </>
                   )}
                 </Button>

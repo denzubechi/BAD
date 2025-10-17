@@ -20,6 +20,7 @@ import {
   Globe,
   Layers,
 } from "lucide-react";
+import { getInitials } from "@/lib/utils";
 
 const features = [
   {
@@ -148,16 +149,13 @@ export default function HomePage() {
       />
 
       <main>
-        {/* Hero Section with Animated Background */}
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-          {/* Animated Background */}
           <div className="absolute inset-0">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-950 to-slate-950" />
             <FloatingOrb delay={0} duration={25} size={400} color="blue" />
             <FloatingOrb delay={5} duration={30} size={300} color="purple" />
             <FloatingOrb delay={10} duration={20} size={350} color="blue" />
 
-            {/* Grid Pattern */}
             <div
               className="absolute inset-0 opacity-10"
               style={{
@@ -169,7 +167,6 @@ export default function HomePage() {
 
           <div className="container mx-auto px-4 py-32 relative z-10">
             <div className="max-w-6xl mx-auto">
-              {/* Badge */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -182,7 +179,6 @@ export default function HomePage() {
                 </Badge>
               </motion.div>
 
-              {/* Main Heading */}
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -460,17 +456,16 @@ export default function HomePage() {
 
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <img
-                                src={
-                                  article.author?.avatar ||
-                                  "/placeholder.svg?height=32&width=32&query=avatar"
-                                }
-                                alt={article.author?.username}
-                                className="w-8 h-8 rounded-full border-2 border-slate-700"
-                              />
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">
+                                {getInitials(
+                                  article.author?.username ||
+                                    article.author?.creatorProfile?.displayName
+                                )}
+                              </div>
                               <div>
                                 <p className="text-sm font-medium text-white">
-                                  {article.author?.username || "Anonymous"}
+                                  {article.author?.creatorProfile
+                                    ?.displayName || "Anonymous"}
                                 </p>
                                 <p className="text-xs text-slate-500">
                                   {new Date(
@@ -547,16 +542,19 @@ export default function HomePage() {
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 text-center group-hover:border-blue-500/50 transition-all duration-300">
-                      <div className="relative inline-block mb-4">
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full blur-md opacity-50 group-hover:opacity-75 transition-opacity" />
-                        <img
-                          src={
-                            creator.user?.avatar ||
-                            "/placeholder.svg?height=96&width=96&query=creator"
-                          }
-                          alt={creator.user?.username}
-                          className="relative w-24 h-24 rounded-full border-4 border-slate-800 group-hover:border-blue-500 transition-colors"
-                        />
+                      <div className="relative inline-block mb-4 group">
+                        <div
+                          className="relative w-24 h-24 rounded-full border-4 border-slate-800 bg-gray-600 flex items-center justify-center 
+               text-white text-3xl font-bold transition-colors 
+               group-hover:border-blue-500 group-hover:bg-blue-700"
+                        >
+                          <span className="relative z-10">
+                            {getInitials(
+                              creator.user.creatorProfile?.displayName || "Anon"
+                            )}
+                          </span>
+                        </div>
+
                         <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center border-4 border-slate-900">
                           <CheckCircle2 className="w-4 h-4 text-white" />
                         </div>

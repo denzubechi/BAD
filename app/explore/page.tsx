@@ -18,6 +18,7 @@ import {
   Eye,
 } from "lucide-react";
 import { ConnectWallet } from "@/components/connect-wallet";
+import { getInitials } from "@/lib/utils";
 
 const categories = ["All", "DeFi", "NFTs", "Social", "Trading", "Analysis"];
 
@@ -109,8 +110,6 @@ export default function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-
       <main>
         {/* Hero Section */}
         <section className="py-16 bg-gradient-to-b from-primary/5 to-transparent">
@@ -232,15 +231,9 @@ export default function ExplorePage() {
                       )}
 
                       <div className="flex items-center gap-2">
-                        {article.author.avatar ? (
-                          <img
-                            src={article.author.avatar || "/placeholder.svg"}
-                            alt={article.author.username || "Author"}
-                            className="w-6 h-6 rounded-full"
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-primary/10" />
-                        )}
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">
+                          {getInitials(article.author.username)}
+                        </div>
                         <span className="text-sm text-muted-foreground">
                           {article.author.username || "Anonymous"}
                         </span>

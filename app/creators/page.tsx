@@ -1,64 +1,71 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Spinner } from "@/components/ui/spinner"
-import Link from "next/link"
-import { Search, Users, BarChart3, Sparkles, TrendingUp, Star } from "lucide-react"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import Link from "next/link";
+import {
+  Search,
+  Users,
+  BarChart3,
+  Sparkles,
+  TrendingUp,
+  Star,
+} from "lucide-react";
 
 interface Creator {
-  id: string
-  displayName: string
-  description: string | null
-  subscriptionPrice: string
-  subscriberCount: number
-  articleCount: number
+  id: string;
+  displayName: string;
+  description: string | null;
+  subscriptionPrice: string;
+  subscriberCount: number;
+  articleCount: number;
   user: {
-    username: string | null
-    avatar: string | null
-    address: string
-  }
+    username: string | null;
+    avatar: string | null;
+    address: string;
+  };
 }
 
 export default function CreatorsPage() {
-  const [creators, setCreators] = useState<Creator[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [creators, setCreators] = useState<Creator[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    loadCreators()
-  }, [])
+    loadCreators();
+  }, []);
 
   const loadCreators = async () => {
     try {
-      const response = await fetch("/api/creators")
+      const response = await fetch("/api/creators");
       if (response.ok) {
-        const data = await response.json()
-        setCreators(data.creators || [])
+        const data = await response.json();
+        setCreators(data.creators || []);
       }
     } catch (error) {
-      console.error("[v0] Error loading creators:", error)
+      console.error("[v0] Error loading creators:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const formatPrice = (price: string) => {
-    const value = BigInt(price)
-    const eth = Number(value) / 1e18
-    return `${eth.toFixed(4)} ETH/month`
-  }
+    const value = BigInt(price);
+    const eth = Number(value) / 1e18;
+    return `${eth.toFixed(4)} ETH/month`;
+  };
 
   const filteredCreators = creators.filter((creator) => {
     const matchesSearch =
       searchQuery === "" ||
       creator.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      creator.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesSearch
-  })
+      creator.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,9 +82,12 @@ export default function CreatorsPage() {
                 <Star className="w-3 h-3 mr-1" />
                 Featured Creators
               </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">Discover Top Creators</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                Discover Top Creators
+              </h1>
               <p className="text-lg text-muted-foreground mb-8">
-                Subscribe to premium content from the best analysts and traders in the Base ecosystem
+                Subscribe to premium content from the best analysts and traders
+                in the Base ecosystem
               </p>
 
               <div className="relative max-w-xl mx-auto">
@@ -105,7 +115,9 @@ export default function CreatorsPage() {
               <div>
                 <h2 className="text-2xl font-bold mb-2">All Creators</h2>
                 <p className="text-muted-foreground">
-                  {isLoading ? "Loading..." : `${filteredCreators.length} creators available`}
+                  {isLoading
+                    ? "Loading..."
+                    : `${filteredCreators.length} creators available`}
                 </p>
               </div>
 
@@ -122,7 +134,9 @@ export default function CreatorsPage() {
             ) : filteredCreators.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-4">
-                  {searchQuery ? "No creators found matching your search." : "No creators found."}
+                  {searchQuery
+                    ? "No creators found matching your search."
+                    : "No creators found."}
                 </p>
                 <Button asChild>
                   <Link href="/become-creator">Become the First Creator</Link>
@@ -164,7 +178,9 @@ export default function CreatorsPage() {
                         </div>
                       </div>
 
-                      <h3 className="font-semibold text-lg mb-1">{creator.displayName}</h3>
+                      <h3 className="font-semibold text-lg mb-1">
+                        {creator.displayName}
+                      </h3>
                       <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                         {creator.description || "No description available"}
                       </p>
@@ -181,9 +197,13 @@ export default function CreatorsPage() {
                       </div>
 
                       <div className="flex items-center justify-between pt-4 border-t border-border">
-                        <span className="text-sm font-medium">{formatPrice(creator.subscriptionPrice)}</span>
+                        <span className="text-sm font-medium">
+                          {creator.subscriptionPrice} USD/month
+                        </span>
                         <Button size="sm" asChild>
-                          <Link href={`/subscribe/${creator.id}`}>Subscribe</Link>
+                          <Link href={`/subscribe/${creator.id}`}>
+                            Subscribe
+                          </Link>
                         </Button>
                       </div>
                     </div>
@@ -205,7 +225,8 @@ export default function CreatorsPage() {
             >
               <h2 className="text-3xl font-bold mb-4">Become a Creator</h2>
               <p className="text-lg text-muted-foreground mb-6">
-                Share your expertise and earn crypto by publishing premium content for the Base community
+                Share your expertise and earn crypto by publishing premium
+                content for the Base community
               </p>
               <Button size="lg" asChild>
                 <Link href="/become-creator">
@@ -218,5 +239,5 @@ export default function CreatorsPage() {
         </section>
       </main>
     </div>
-  )
+  );
 }

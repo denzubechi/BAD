@@ -1,9 +1,12 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { type NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = await params
+    const { id } = params;
 
     const article = await prisma.article.findUnique({
       where: { id },
@@ -14,29 +17,52 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             username: true,
             avatar: true,
             address: true,
+            creatorProfile: {
+              select: {
+                displayName: true,
+              },
+            },
           },
         },
       },
-    })
+    });
 
     if (!article) {
-      return NextResponse.json({ error: "Article not found" }, { status: 404 })
+      return NextResponse.json({ error: "Article not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ article })
+    return NextResponse.json({ article });
   } catch (error) {
-    console.error("[v0] Error fetching article:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("[v0] Error fetching article:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = await params
-    const { title, slug, excerpt, content, coverImage, isPremium, status, publishedAt } = await request.json()
+    const { id } = params;
+    const {
+      title,
+      slug,
+      excerpt,
+      content,
+      coverImage,
+      isPremium,
+      status,
+      publishedAt,
+    } = await request.json();
 
     if (!title || !slug || !content) {
-      return NextResponse.json({ error: "Required fields missing" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Required fields missing" },
+        { status: 400 }
+      );
     }
 
     // Check if slug already exists for a different article
@@ -45,10 +71,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         slug,
         NOT: { id },
       },
-    })
+    });
 
     if (existing) {
-      return NextResponse.json({ error: "Slug already exists" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Slug already exists" },
+        { status: 400 }
+      );
     }
 
     const article = await prisma.article.update({
@@ -63,26 +92,35 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         status,
         publishedAt: publishedAt ? new Date(publishedAt) : null,
       },
-    })
+    });
 
-    return NextResponse.json({ article })
+    return NextResponse.json({ article });
   } catch (error) {
-    console.error("[v0] Error updating article:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("[v0] Error updating article:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = await params
+    const { id } = params;
 
     await prisma.article.delete({
       where: { id },
-    })
+    });
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[v0] Error deleting article:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("[v0] Error deleting article:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

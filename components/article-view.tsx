@@ -10,6 +10,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { PremiumContentGate } from "./premium-content-gate";
 import { ConnectWallet } from "./connect-wallet";
+import { getInitials } from "@/lib/utils";
 
 interface Article {
   id: string;
@@ -95,7 +96,27 @@ export function ArticleView({ article }: ArticleViewProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header */}
+      <motion.header
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl"
+      >
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Link>
+
+          <ConnectWallet />
+        </div>
+      </motion.header>
+
       <main className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Cover Image */}
         {article.coverImage && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -116,6 +137,7 @@ export function ArticleView({ article }: ArticleViewProps) {
           </motion.div>
         )}
 
+        {/* Article Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -147,15 +169,9 @@ export function ArticleView({ article }: ArticleViewProps) {
           {/* Author Info */}
           <div className="flex items-center justify-between py-6 border-y border-border">
             <div className="flex items-center gap-4">
-              {article.author.avatar ? (
-                <img
-                  src={article.author.avatar || "/placeholder.svg"}
-                  alt={article.author.username || "Author"}
-                  className="w-12 h-12 rounded-full"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-primary/10" />
-              )}
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center text-white font-bold">
+                {getInitials(article.author.username || article.author.address)}
+              </div>
               <div>
                 <p className="font-semibold">
                   {article.author.username ||
@@ -180,7 +196,6 @@ export function ArticleView({ article }: ArticleViewProps) {
           </div>
         </motion.div>
 
-        {/* Article Content */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -210,7 +225,6 @@ export function ArticleView({ article }: ArticleViewProps) {
               creatorId={article.author.id}
               creatorName={article.author.username || undefined}
             >
-              {/* This won't be shown, but required for component structure */}
               <div />
             </PremiumContentGate>
           )}
@@ -227,18 +241,19 @@ export function ArticleView({ article }: ArticleViewProps) {
             <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20">
               <CardContent className="p-8">
                 <div className="flex items-center gap-6">
-                  {article.author.avatar ? (
-                    <img
-                      src={article.author.avatar || "/placeholder.svg"}
-                      alt={article.author.username || "Author"}
-                      className="w-20 h-20 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-primary/10" />
-                  )}
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center text-white font-bold text-2xl">
+                    {getInitials(
+                      article.author.username || article.author.address
+                    )}
+                  </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2">
-                      Written by {article.author.username || "Anonymous"}
+                      Written by{" "}
+                      {article.author.username ||
+                        `${article.author.address.slice(
+                          0,
+                          6
+                        )}...${article.author.address.slice(-4)}`}
                     </h3>
                     <p className="text-muted-foreground mb-4">
                       Get access to all premium content and exclusive insights
