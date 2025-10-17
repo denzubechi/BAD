@@ -259,7 +259,6 @@ function SubscribeContent({
         description: `Subscribing to ${creator.displayName}`,
       });
 
-      // Create subscription in DB
       const subscriptionResponse = await fetch("/api/subscriptions/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -276,7 +275,7 @@ function SubscribeContent({
         }, 1500);
       }
     } catch (error) {
-      console.error("[v0] Error creating subscription:", error);
+      console.error("Error creating subscription:", error);
       setStatus("Failed to create subscription");
       setStatusType("error");
       toast.error("Subscription failed", {
@@ -373,9 +372,9 @@ function SubscribeContent({
                 <div className="p-4 rounded-lg border border-border">
                   <CreditCard className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
                   <p className="text-2xl font-bold">
-                    {formatPrice(creator.subscriptionPrice)}
+                    {creator.subscriptionPrice}
                   </p>
-                  <p className="text-sm text-muted-foreground">Per Month</p>
+                  <p className="text-sm text-muted-foreground">USD/Per Month</p>
                 </div>
               </div>
 
@@ -461,8 +460,7 @@ function SubscribeContent({
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4 mr-2" />
-                      Subscribe for {formatPrice(creator.subscriptionPrice)} /
-                      month
+                      Subscribe for {creator.subscriptionPrice} / month
                     </>
                   )}
                 </Button>
