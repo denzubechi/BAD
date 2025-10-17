@@ -5,6 +5,7 @@ import { GeistMono } from "geist/font/mono";
 import { Analytics } from "@vercel/analytics/next";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
+import { Providers } from "@/lib/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,10 +22,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <Navigation />
-        {children}
-        <Footer />
-        <Analytics />
+        <Providers>
+          <Navigation />
+          {children}
+          <Footer />
+          <Analytics />
+        </Providers>
       </body>
     </html>
   );

@@ -1,77 +1,87 @@
-"use client"
+"use client";
 
-import { useCallback, useEffect, useState } from "react"
-import { useAuthStore } from "@/lib/store/auth-store"
-import { sdk, chainId } from "@/lib/base-account"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Spinner } from "@/components/ui/spinner"
-import { Wallet, Plus, Send, CheckCircle2, AlertCircle } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-
+import { useCallback, useEffect, useState } from "react";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { useAccount, useWalletClient } from "wagmi";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
+import { Wallet, Plus, Send, CheckCircle2, AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { baseSepolia } from "viem/chains";
+import { createBaseAccountSDK } from "@base-org/account";
 interface SubAccount {
-  address: `0x${string}`
-  factory?: `0x${string}`
-  factoryData?: `0x${string}`
+  address: `0x${string}`;
+  factory?: `0x${string}`;
+  factoryData?: `0x${string}`;
 }
 
 interface GetSubAccountsResponse {
-  subAccounts: SubAccount[]
+  subAccounts: SubAccount[];
 }
 
 interface WalletAddSubAccountResponse {
-  address: `0x${string}`
-  factory?: `0x${string}`
-  factoryData?: `0x${string}`
+  address: `0x${string}`;
+  factory?: `0x${string}`;
+  factoryData?: `0x${string}`;
 }
 
 export function SubAccountManager() {
-  const { universalAddress, subAccount, setSubAccount } = useAuthStore()
-  const [provider, setProvider] = useState<ReturnType<typeof sdk.getProvider> | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [status, setStatus] = useState("")
-  const [statusType, setStatusType] = useState<"success" | "error" | "info">("info")
-  const [testCallTo, setTestCallTo] = useState("0x4bbfd120d9f352a0bed7a014bd67913a2007a878")
-  const [testCallData, setTestCallData] = useState("0x9846cd9e")
+  const { universalAddress, subAccount, setSubAccount } = useAuthStore();
+  const { address } = useAccount();
+  const [provider, setProvider] = useState<ReturnType<
+    ReturnType<typeof createBaseAccountSDK>["getProvider"]
+  > | null>(null);
+  const { data: walletClient } = useWalletClient();
+  const [isLoading, setIsLoading] = useState(false);
+  const [status, setStatus] = useState("");
+  const [statusType, setStatusType] = useState<"success" | "error" | "info">(
+    "info"
+  );
+  const [testCallTo, setTestCallTo] = useState(
+    "0x4bbfd120d9f352a0bed7a014bd67913a2007a878"
+  );
+  const [testCallData, setTestCallData] = useState("0x9846cd9e");
 
   useEffect(() => {
-    const providerInstance = sdk.getProvider()
-    setProvider(providerInstance)
-  }, [])
-
-  useEffect(() => {
-    if (provider && universalAddress && !subAccount) {
-      checkExistingSubAccount()
+    if (walletClient && address && !subAccount) {
+      checkExistingSubAccount();
     }
-  }, [provider, universalAddress])
+  }, [walletClient, address]);
 
   const checkExistingSubAccount = async () => {
-    if (!provider || !universalAddress) return
+    if (!provider || !address) return;
 
     try {
       const response = (await provider.request({
         method: "wallet_getSubAccounts",
         params: [
           {
-            account: universalAddress,
+            account: address,
             domain: window.location.origin,
           },
         ],
-      })) as GetSubAccountsResponse
+      })) as GetSubAccountsResponse;
 
-      const existing = response.subAccounts[0]
+      const existing = response.subAccounts[0];
       if (existing) {
-        setSubAccount(existing)
-        await updateSubAccountInDB(existing)
-        setStatus("Existing sub-account found")
-        setStatusType("success")
+        setSubAccount(existing);
+        await updateSubAccountInDB(existing);
+        setStatus("Existing sub-account found");
+        setStatusType("success");
       }
     } catch (error) {
-      console.error("[v0] Error checking sub-account:", error)
+      console.error("Error checking sub-account:", error);
     }
-  }
+  };
 
   const updateSubAccountInDB = async (account: SubAccount) => {
     try {
@@ -79,27 +89,27 @@ export function SubAccountManager() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          address: universalAddress,
+          address: address,
           subAccountAddress: account.address,
           subAccountFactory: account.factory,
           subAccountFactoryData: account.factoryData,
         }),
-      })
+      });
     } catch (error) {
-      console.error("[v0] Error updating sub-account in DB:", error)
+      console.error("Error updating sub-account in DB:", error);
     }
-  }
+  };
 
   const createSubAccount = async () => {
     if (!provider) {
-      setStatus("Provider not initialized")
-      setStatusType("error")
-      return
+      setStatus("Wallet not connected");
+      setStatusType("error");
+      return;
     }
 
-    setIsLoading(true)
-    setStatus("Creating sub-account...")
-    setStatusType("info")
+    setIsLoading(true);
+    setStatus("Creating sub-account...");
+    setStatusType("info");
 
     try {
       const newSubAccount = (await provider.request({
@@ -111,31 +121,31 @@ export function SubAccountManager() {
             },
           },
         ],
-      })) as WalletAddSubAccountResponse
+      })) as WalletAddSubAccountResponse;
 
-      setSubAccount(newSubAccount)
-      await updateSubAccountInDB(newSubAccount)
-      setStatus("Sub-account created successfully!")
-      setStatusType("success")
+      setSubAccount(newSubAccount);
+      await updateSubAccountInDB(newSubAccount);
+      setStatus("Sub-account created successfully!");
+      setStatusType("success");
     } catch (error) {
-      console.error("[v0] Sub-account creation failed:", error)
-      setStatus("Sub-account creation failed. Please try again.")
-      setStatusType("error")
+      console.error("Sub-account creation failed:", error);
+      setStatus("Sub-account creation failed. Please try again.");
+      setStatusType("error");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const sendTestCall = useCallback(async () => {
-    if (!provider || !subAccount) {
-      setStatus("Sub-account not available")
-      setStatusType("error")
-      return
+    if (!walletClient || !subAccount) {
+      setStatus("Sub-account not available");
+      setStatusType("error");
+      return;
     }
 
-    setIsLoading(true)
-    setStatus("Sending test transaction...")
-    setStatusType("info")
+    setIsLoading(true);
+    setStatus("Sending test transaction...");
+    setStatusType("info");
 
     try {
       const calls = [
@@ -144,36 +154,36 @@ export function SubAccountManager() {
           data: testCallData,
           value: "0x0",
         },
-      ]
+      ];
 
-      const callsId = (await provider.request({
+      const callsId = (await walletClient.request({
         method: "wallet_sendCalls",
         params: [
           {
             version: "2.0",
             atomicRequired: true,
-            chainId: `0x${chainId.toString(16)}`,
+            chainId: `0x${baseSepolia.id.toString(16)}`,
             from: subAccount.address,
             calls,
             capabilities: {},
           },
         ],
-      })) as string
+      })) as string;
 
-      setStatus(`Transaction sent! Calls ID: ${callsId}`)
-      setStatusType("success")
+      setStatus(`Transaction sent! Calls ID: ${callsId}`);
+      setStatusType("success");
     } catch (error) {
-      console.error("[v0] Send calls failed:", error)
-      setStatus("Transaction failed. Please try again.")
-      setStatusType("error")
+      console.error("Send calls failed:", error);
+      setStatus("Transaction failed. Please try again.");
+      setStatusType("error");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [provider, subAccount, testCallTo, testCallData])
+  }, [walletClient, subAccount, testCallTo, testCallData]);
 
   const formatAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`
-  }
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -191,28 +201,40 @@ export function SubAccountManager() {
             <Wallet className="w-5 h-5" />
             Account Information
           </CardTitle>
-          <CardDescription>Your universal and sub-account details</CardDescription>
+          <CardDescription>
+            Your universal and sub-account details
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label className="text-sm text-muted-foreground">Universal Account</Label>
-            <p className="font-mono text-sm mt-1">{universalAddress || "Not connected"}</p>
+            <Label className="text-sm text-muted-foreground">
+              Universal Account
+            </Label>
+            <p className="font-mono text-sm mt-1">
+              {address || "Not connected"}
+            </p>
           </div>
 
           {subAccount ? (
             <div>
-              <Label className="text-sm text-muted-foreground">Sub-Account Address</Label>
+              <Label className="text-sm text-muted-foreground">
+                Sub-Account Address
+              </Label>
               <p className="font-mono text-sm mt-1">{subAccount.address}</p>
               {subAccount.factory && (
                 <>
-                  <Label className="text-sm text-muted-foreground mt-3">Factory Address</Label>
+                  <Label className="text-sm text-muted-foreground mt-3">
+                    Factory Address
+                  </Label>
                   <p className="font-mono text-sm mt-1">{subAccount.factory}</p>
                 </>
               )}
             </div>
           ) : (
             <div className="p-4 rounded-lg border border-dashed border-border bg-muted/50">
-              <p className="text-sm text-muted-foreground text-center">No sub-account created yet</p>
+              <p className="text-sm text-muted-foreground text-center">
+                No sub-account created yet
+              </p>
             </div>
           )}
         </CardContent>
@@ -226,11 +248,16 @@ export function SubAccountManager() {
               Create Sub-Account
             </CardTitle>
             <CardDescription>
-              Create a sub-account to enable automated subscriptions and spend permissions
+              Create a sub-account to enable automated subscriptions and spend
+              permissions
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={createSubAccount} disabled={isLoading} className="w-full">
+            <Button
+              onClick={createSubAccount}
+              disabled={isLoading || !walletClient}
+              className="w-full"
+            >
               {isLoading ? (
                 <>
                   <Spinner className="w-4 h-4 mr-2" />
@@ -254,7 +281,9 @@ export function SubAccountManager() {
               <Send className="w-5 h-5" />
               Test Transaction
             </CardTitle>
-            <CardDescription>Send a test transaction from your sub-account</CardDescription>
+            <CardDescription>
+              Send a test transaction from your sub-account
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -277,7 +306,11 @@ export function SubAccountManager() {
                 className="font-mono text-sm"
               />
             </div>
-            <Button onClick={sendTestCall} disabled={isLoading} className="w-full">
+            <Button
+              onClick={sendTestCall}
+              disabled={isLoading || !walletClient}
+              className="w-full"
+            >
               {isLoading ? (
                 <>
                   <Spinner className="w-4 h-4 mr-2" />
@@ -300,11 +333,13 @@ export function SubAccountManager() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
-            Sub-accounts are specialized accounts that enable automated payments and spend permissions for
-            subscriptions.
+            Sub-accounts are specialized accounts that enable automated payments
+            and spend permissions for subscriptions.
           </p>
           <ul className="list-disc list-inside space-y-1 ml-2">
-            <li>Enable recurring subscription payments without manual approval</li>
+            <li>
+              Enable recurring subscription payments without manual approval
+            </li>
             <li>Set spending limits and permissions for specific creators</li>
             <li>Maintain security while allowing automated transactions</li>
             <li>Required for subscribing to premium content creators</li>
@@ -312,5 +347,5 @@ export function SubAccountManager() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

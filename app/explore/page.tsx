@@ -1,140 +1,115 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Spinner } from "@/components/ui/spinner"
-import Link from "next/link"
-import { Search, TrendingUp, Users, BarChart3, Lock, Sparkles, Filter, Eye } from "lucide-react"
-import { ConnectWallet } from "@/components/connect-wallet"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import Link from "next/link";
+import {
+  Search,
+  TrendingUp,
+  Users,
+  BarChart3,
+  Lock,
+  Sparkles,
+  Filter,
+  Eye,
+} from "lucide-react";
+import { ConnectWallet } from "@/components/connect-wallet";
 
-const categories = ["All", "DeFi", "NFTs", "Social", "Trading", "Analysis"]
+const categories = ["All", "DeFi", "NFTs", "Social", "Trading", "Analysis"];
 
 interface Creator {
-  id: string
-  displayName: string
-  description: string | null
-  subscriptionPrice: string
-  subscriberCount: number
-  articleCount: number
+  id: string;
+  displayName: string;
+  description: string | null;
+  subscriptionPrice: string;
+  subscriberCount: number;
+  articleCount: number;
   user: {
-    username: string | null
-    avatar: string | null
-    address: string
-  }
+    username: string | null;
+    avatar: string | null;
+    address: string;
+  };
 }
 
 interface Article {
-  id: string
-  title: string
-  slug: string
-  excerpt: string | null
-  coverImage: string | null
-  isPremium: boolean
-  viewCount: number
-  publishedAt: string | null
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  coverImage: string | null;
+  isPremium: boolean;
+  viewCount: number;
+  publishedAt: string | null;
   author: {
-    username: string | null
-    avatar: string | null
-  }
+    username: string | null;
+    avatar: string | null;
+  };
 }
 
 export default function ExplorePage() {
-  const [creators, setCreators] = useState<Creator[]>([])
-  const [articles, setArticles] = useState<Article[]>([])
-  const [isLoadingCreators, setIsLoadingCreators] = useState(true)
-  const [isLoadingArticles, setIsLoadingArticles] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("All")
+  const [creators, setCreators] = useState<Creator[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [isLoadingCreators, setIsLoadingCreators] = useState(true);
+  const [isLoadingArticles, setIsLoadingArticles] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   useEffect(() => {
-    loadCreators()
-    loadArticles()
-  }, [])
+    loadCreators();
+    loadArticles();
+  }, []);
 
   const loadCreators = async () => {
     try {
-      const response = await fetch("/api/creators")
+      const response = await fetch("/api/creators");
       if (response.ok) {
-        const data = await response.json()
-        setCreators(data.creators || [])
+        const data = await response.json();
+        setCreators(data.creators || []);
       }
     } catch (error) {
-      console.error("[v0] Error loading creators:", error)
+      console.error("[v0] Error loading creators:", error);
     } finally {
-      setIsLoadingCreators(false)
+      setIsLoadingCreators(false);
     }
-  }
+  };
 
   const loadArticles = async () => {
     try {
-      const response = await fetch("/api/articles?status=PUBLISHED")
+      const response = await fetch("/api/articles?status=PUBLISHED");
       if (response.ok) {
-        const data = await response.json()
-        setArticles(data.articles || [])
+        const data = await response.json();
+        setArticles(data.articles || []);
       }
     } catch (error) {
-      console.error("[v0] Error loading articles:", error)
+      console.error("[v0] Error loading articles:", error);
     } finally {
-      setIsLoadingArticles(false)
+      setIsLoadingArticles(false);
     }
-  }
+  };
 
   const formatPrice = (price: string) => {
-    const value = BigInt(price)
-    const eth = Number(value) / 1e18
-    return `${eth.toFixed(4)} ETH/month`
-  }
+    const value = BigInt(price);
+    const eth = Number(value) / 1e18;
+    return `${eth.toFixed(4)} ETH/month`;
+  };
 
   const filteredCreators = creators.filter((creator) => {
     const matchesSearch =
       searchQuery === "" ||
       creator.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      creator.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesSearch
-  })
+      creator.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
 
-  const featuredArticles = articles.slice(0, 3)
+  const featuredArticles = articles.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <motion.header
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl"
-      >
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-blue-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold">Base Analyst Daily</h1>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/explore" className="text-sm font-medium text-primary">
-              Explore
-            </Link>
-            <Link
-              href="/creator/dashboard"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              For Creators
-            </Link>
-            <Link
-              href="/subscriptions"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Subscriptions
-            </Link>
-          </nav>
-
-          <ConnectWallet />
-        </div>
-      </motion.header>
 
       <main>
         {/* Hero Section */}
@@ -145,9 +120,12 @@ export default function ExplorePage() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-3xl mx-auto text-center mb-8"
             >
-              <h2 className="text-4xl md:text-5xl font-bold mb-4">Explore Creators</h2>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                Explore Creators
+              </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Discover premium content from top Base ecosystem analysts and traders
+                Discover premium content from top Base ecosystem analysts and
+                traders
               </p>
 
               <div className="relative max-w-xl mx-auto">
@@ -171,7 +149,9 @@ export default function ExplorePage() {
               {categories.map((category) => (
                 <Button
                   key={category}
-                  variant={category === selectedCategory ? "default" : "outline"}
+                  variant={
+                    category === selectedCategory ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => setSelectedCategory(category)}
                 >
@@ -197,7 +177,9 @@ export default function ExplorePage() {
                 className="mb-8"
               >
                 <h3 className="text-2xl font-bold mb-2">Featured Articles</h3>
-                <p className="text-muted-foreground">Trending insights from our top creators</p>
+                <p className="text-muted-foreground">
+                  Trending insights from our top creators
+                </p>
               </motion.div>
 
               <div className="grid md:grid-cols-3 gap-6">
@@ -210,11 +192,16 @@ export default function ExplorePage() {
                     transition={{ delay: index * 0.1 }}
                     whileHover={{ y: -5 }}
                     className="group rounded-xl border border-border bg-card overflow-hidden hover:border-primary/50 transition-all cursor-pointer"
-                    onClick={() => (window.location.href = `/articles/${article.slug}`)}
+                    onClick={() =>
+                      (window.location.href = `/articles/${article.slug}`)
+                    }
                   >
                     <div className="relative aspect-video overflow-hidden bg-muted">
                       <img
-                        src={article.coverImage || "/placeholder.svg?height=200&width=400"}
+                        src={
+                          article.coverImage ||
+                          "/placeholder.svg?height=200&width=400"
+                        }
                         alt={article.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -239,7 +226,9 @@ export default function ExplorePage() {
                       </h4>
 
                       {article.excerpt && (
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{article.excerpt}</p>
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {article.excerpt}
+                        </p>
                       )}
 
                       <div className="flex items-center gap-2">
@@ -252,7 +241,9 @@ export default function ExplorePage() {
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-primary/10" />
                         )}
-                        <span className="text-sm text-muted-foreground">{article.author.username || "Anonymous"}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {article.author.username || "Anonymous"}
+                        </span>
                       </div>
                     </div>
                   </motion.div>
@@ -274,7 +265,9 @@ export default function ExplorePage() {
               <div>
                 <h3 className="text-2xl font-bold mb-2">All Creators</h3>
                 <p className="text-muted-foreground">
-                  {isLoadingCreators ? "Loading..." : `${filteredCreators.length} creators available`}
+                  {isLoadingCreators
+                    ? "Loading..."
+                    : `${filteredCreators.length} creators available`}
                 </p>
               </div>
 
@@ -292,7 +285,9 @@ export default function ExplorePage() {
               </div>
             ) : filteredCreators.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">No creators found. Be the first to become a creator!</p>
+                <p className="text-muted-foreground">
+                  No creators found. Be the first to become a creator!
+                </p>
                 <Button asChild className="mt-4">
                   <Link href="/become-creator">Become a Creator</Link>
                 </Button>
@@ -333,7 +328,9 @@ export default function ExplorePage() {
                         </div>
                       </div>
 
-                      <h4 className="font-semibold text-lg mb-1">{creator.displayName}</h4>
+                      <h4 className="font-semibold text-lg mb-1">
+                        {creator.displayName}
+                      </h4>
                       <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                         {creator.description || "No description available"}
                       </p>
@@ -350,9 +347,13 @@ export default function ExplorePage() {
                       </div>
 
                       <div className="flex items-center justify-between pt-4 border-t border-border">
-                        <span className="text-sm font-medium">{formatPrice(creator.subscriptionPrice)}</span>
+                        <span className="text-sm font-medium">
+                          {formatPrice(creator.subscriptionPrice)}
+                        </span>
                         <Button size="sm" asChild>
-                          <Link href={`/subscribe/${creator.id}`}>Subscribe</Link>
+                          <Link href={`/subscribe/${creator.id}`}>
+                            Subscribe
+                          </Link>
                         </Button>
                       </div>
                     </div>
@@ -364,5 +365,5 @@ export default function ExplorePage() {
         </section>
       </main>
     </div>
-  )
+  );
 }

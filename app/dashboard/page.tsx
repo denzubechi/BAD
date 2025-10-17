@@ -1,14 +1,36 @@
-"use client"
+"use client";
 
-import { AuthGuard } from "@/components/auth-guard"
-import { useAuthStore } from "@/lib/store/auth-store"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
-import { User, FileText, CreditCard, Settings } from "lucide-react"
+import { useAccount } from "wagmi";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import Link from "next/link";
+import { User, FileText, CreditCard, Settings } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
-function DashboardContent() {
-  const { universalAddress, isCreator, isPremium } = useAuthStore()
+export default function DashboardPage() {
+  const { isConnected } = useAccount();
+  const { universalAddress, isCreator, isPremium } = useAuthStore();
+
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Alert className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Please connect your wallet to access the dashboard.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -71,7 +93,9 @@ function DashboardContent() {
             <Card>
               <CardHeader>
                 <CardTitle>Become a Creator</CardTitle>
-                <CardDescription>Start publishing premium content</CardDescription>
+                <CardDescription>
+                  Start publishing premium content
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button asChild className="w-full">
@@ -90,7 +114,11 @@ function DashboardContent() {
               <CardDescription>Configure your preferences</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild variant="outline" className="w-full bg-transparent">
+              <Button
+                asChild
+                variant="outline"
+                className="w-full bg-transparent"
+              >
                 <Link href="/settings">Open Settings</Link>
               </Button>
             </CardContent>
@@ -106,13 +134,21 @@ function DashboardContent() {
             </p>
             <p>
               <span className="text-muted-foreground">Creator Status:</span>{" "}
-              <span className={isCreator ? "text-green-500" : "text-muted-foreground"}>
+              <span
+                className={
+                  isCreator ? "text-green-500" : "text-muted-foreground"
+                }
+              >
                 {isCreator ? "Active" : "Not a creator"}
               </span>
             </p>
             <p>
               <span className="text-muted-foreground">Premium Status:</span>{" "}
-              <span className={isPremium ? "text-green-500" : "text-muted-foreground"}>
+              <span
+                className={
+                  isPremium ? "text-green-500" : "text-muted-foreground"
+                }
+              >
                 {isPremium ? "Active" : "Free tier"}
               </span>
             </p>
@@ -120,13 +156,5 @@ function DashboardContent() {
         </div>
       </main>
     </div>
-  )
-}
-
-export default function DashboardPage() {
-  return (
-    <AuthGuard>
-      <DashboardContent />
-    </AuthGuard>
-  )
+  );
 }

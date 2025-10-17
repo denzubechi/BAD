@@ -1,14 +1,13 @@
-import { createBaseAccountSDK } from "@base-org/account"
-import { base, baseSepolia } from "viem/chains"
+import { createBaseAccountSDK } from "@base-org/account";
+import { base, baseSepolia } from "viem/chains";
 
-const isDevelopment = process.env.NODE_ENV === "development"
+const isDevelopment = process.env.NODE_ENV === "development";
 
-let sdkInstance: ReturnType<typeof createBaseAccountSDK> | null = null
+let sdkInstance: ReturnType<typeof createBaseAccountSDK> | null = null;
 
 const initializeSDK = () => {
-  // Only initialize on client side
   if (typeof window === "undefined") {
-    return null
+    return null;
   }
 
   if (!sdkInstance) {
@@ -20,41 +19,40 @@ const initializeSDK = () => {
         subAccounts: {
           funding: "manual",
         },
-      })
+      });
     } catch (error) {
-      console.error("[v0] Failed to initialize Base Account SDK:", error)
-      return null
+      console.error("[v0] Failed to initialize Base Account SDK:", error);
+      return null;
     }
   }
 
-  return sdkInstance
-}
+  return sdkInstance;
+};
 
-// Export SDK with lazy initialization
 export const sdk = new Proxy({} as ReturnType<typeof createBaseAccountSDK>, {
   get(target, prop) {
-    const instance = initializeSDK()
+    const instance = initializeSDK();
     if (!instance) {
-      throw new Error("SDK can only be used on the client side")
+      throw new Error("SDK can only be used on the client side");
     }
-    return instance[prop as keyof typeof instance]
+    return instance[prop as keyof typeof instance];
   },
-})
+});
 
 export const getSDK = () => {
-  const instance = initializeSDK()
+  const instance = initializeSDK();
   if (!instance) {
-    throw new Error("SDK can only be initialized on the client side")
+    throw new Error("SDK can only be initialized on the client side");
   }
-  return instance
-}
+  return instance;
+};
 
 export const getProvider = () => {
-  const instance = initializeSDK()
+  const instance = initializeSDK();
   if (!instance) {
-    throw new Error("Provider can only be accessed on the client side")
+    throw new Error("Provider can only be accessed on the client side");
   }
-  return instance.getProvider()
-}
+  return instance.getProvider();
+};
 
-export const chainId = isDevelopment ? baseSepolia.id : base.id
+export const chainId = isDevelopment ? baseSepolia.id : base.id;

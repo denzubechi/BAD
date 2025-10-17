@@ -1,113 +1,192 @@
-"use client"
+"use client";
 
-import { use, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { AuthGuard } from "@/components/auth-guard"
-import { useAuthStore } from "@/lib/store/auth-store"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Spinner } from "@/components/ui/spinner"
-import { CheckCircle2, AlertCircle, CreditCard, Users, FileText } from "lucide-react"
+import { use, useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import {
+  useAccount,
+  useSendTransaction,
+  useWaitForTransactionReceipt,
+} from "wagmi";
+import { useAuthStore } from "@/lib/store/auth-store";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  CheckCircle2,
+  AlertCircle,
+  CreditCard,
+  Users,
+  FileText,
+} from "lucide-react";
+import { encodeFunctionData, parseUnits } from "viem";
+// Assuming you have these utility files:
+import { USDC, erc20Abi } from "@/lib/usdc";
+import { toast } from "sonner";
+
+// The ReturnType utility type is not necessary here as 'sendTransaction'
+// is used directly from the hook result, but if you needed to type it
+// for an external function/prop, this is what the type is:
+// type SendTransactionFn = ReturnType<typeof useSendTransaction>["sendTransaction"];
 
 interface Creator {
-  id: string
-  displayName: string
-  description: string | null
-  subscriptionPrice: string
-  subscriberCount: number
-  articleCount: number
+  id: string;
+  displayName: string;
+  description: string | null;
+  subscriptionPrice: string; // Price in BigInt/string format (wei for ETH/USDC units)
+  subscriberCount: number;
+  articleCount: number;
   user: {
-    username: string | null
-    avatar: string | null
-    address: string
-  }
+    username: string | null;
+    avatar: string | null;
+    address: string; // Creator's wallet address
+  };
 }
 
-function SubscribeContent({ params }: { params: Promise<{ creatorId: string }> }) {
-  const { creatorId } = use(params)
-  const router = useRouter()
-  const { userId, subAccount } = useAuthStore()
-  const [creator, setCreator] = useState<Creator | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSubscribing, setIsSubscribing] = useState(false)
-  const [status, setStatus] = useState("")
-  const [statusType, setStatusType] = useState<"success" | "error" | "info">("info")
+function SubscribeContent({
+  params,
+}: {
+  params: Promise<{ creatorId: string }>;
+}) {
+  // --- Next.js and State Hooks ---
+  const { creatorId } = use(params);
+  const router = useRouter();
+  const { isConnected } = useAccount(); // Check wallet connection status
+  const { userId, subAccount } = useAuthStore(); // Get user ID and sub-account status
+  const [creator, setCreator] = useState<Creator | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [status, setStatus] = useState("");
+  const [statusType, setStatusType] = useState<"success" | "error" | "info">(
+    "info"
+  );
+
+  const {
+    sendTransaction,
+    data: hash,
+    isPending: isTransactionPending,
+    reset: resetTransaction,
+  } = useSendTransaction();
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
+
+  const [hasLoadedCreator, setHasLoadedCreator] = useState(false);
 
   useEffect(() => {
-    loadCreator()
-  }, [creatorId])
+    if (!hasLoadedCreator) {
+      setHasLoadedCreator(true);
+      loadCreator();
+    }
+  }, [creatorId, hasLoadedCreator]);
 
   const loadCreator = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const response = await fetch(`/api/creators/${creatorId}`)
+      const response = await fetch(`/api/creators/${creatorId}`);
       if (response.ok) {
-        const data = await response.json()
-        setCreator(data.creator)
+        const data = await response.json();
+        setCreator(data.creator);
+      } else {
+        throw new Error("Failed to fetch creator");
       }
     } catch (error) {
-      console.error("[v0] Error loading creator:", error)
-      setStatus("Failed to load creator information")
-      setStatusType("error")
+      console.error("[v0] Error loading creator:", error);
+      setStatus("Failed to load creator information");
+      setStatusType("error");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const subscribe = async () => {
-    if (!subAccount) {
-      setStatus("You need to create a sub-account first")
-      setStatusType("error")
-      return
+  const subscribe = useCallback(async () => {
+    if (!subAccount || !creator) {
+      setStatus("You need to create a sub-account first");
+      setStatusType("error");
+      return;
     }
 
-    setIsSubscribing(true)
-    setStatus("Creating subscription...")
-    setStatusType("info")
+    setStatus("Sending subscription payment...");
+    setStatusType("info");
 
     try {
-      const response = await fetch("/api/subscriptions/create", {
+      const data = encodeFunctionData({
+        abi: erc20Abi,
+        functionName: "transfer",
+        args: [
+          creator.user.address as `0x${string}`,
+          parseUnits(creator.subscriptionPrice, USDC.decimals),
+        ],
+      });
+
+      sendTransaction({
+        to: USDC.address,
+        data,
+        value: 0n, // ETH value is 0 since we're sending an ERC-20 token
+      });
+
+      toast.loading("Processing subscription payment...", {
+        description: `Subscribing to ${creator.displayName}`,
+      });
+    } catch (error) {
+      console.error("[v0] Error creating subscription:", error);
+      setStatus("Failed to create subscription. Check your wallet.");
+      setStatusType("error");
+      toast.error("Transaction failed or was rejected.");
+    }
+  }, [subAccount, creator, sendTransaction]);
+  useEffect(() => {
+    if (isConfirmed && creator) {
+      fetch("/api/subscriptions/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           subscriberId: userId,
-          creatorId,
+          creatorId: creator.id,
         }),
-      })
+      }).then((response) => {
+        if (response.ok) {
+          toast.success("Subscription created successfully!");
+          setStatus("Subscription successful!");
+          setStatusType("success");
+          setTimeout(() => {
+            router.push("/subscriptions");
+          }, 1500);
+        } else {
+          toast.error(
+            "Transaction successful, but backend failed to record subscription."
+          );
+          setStatus(
+            "Payment confirmed, but subscription setup failed on server."
+          );
+          setStatusType("error");
+        }
+      });
 
-      if (response.ok) {
-        setStatus("Subscription created successfully!")
-        setStatusType("success")
-        setTimeout(() => {
-          router.push("/subscriptions")
-        }, 1500)
-      } else {
-        const error = await response.json()
-        setStatus(error.error || "Failed to create subscription")
-        setStatusType("error")
-      }
-    } catch (error) {
-      console.error("[v0] Error creating subscription:", error)
-      setStatus("Failed to create subscription")
-      setStatusType("error")
-    } finally {
-      setIsSubscribing(false)
+      resetTransaction();
     }
-  }
+  }, [isConfirmed, creator, userId, router, resetTransaction]);
 
   const formatPrice = (price: string) => {
-    const value = BigInt(price)
-    const eth = Number(value) / 1e18
-    return eth.toFixed(6)
-  }
+    const value = BigInt(price);
+
+    const eth = Number(value) / 1e6;
+    return eth.toFixed(2) + " USDC";
+  };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Spinner className="w-8 h-8" />
       </div>
-    )
+    );
   }
 
   if (!creator) {
@@ -115,13 +194,16 @@ function SubscribeContent({ params }: { params: Promise<{ creatorId: string }> }
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card>
           <CardContent className="py-12">
-            <p className="text-center text-muted-foreground">Creator not found</p>
+            <p className="text-center text-muted-foreground">
+              Creator not found
+            </p>
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
+  // --- Render Main Content ---
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
@@ -144,13 +226,21 @@ function SubscribeContent({ params }: { params: Promise<{ creatorId: string }> }
             <CardHeader>
               <div className="flex items-start gap-4">
                 {creator.user.avatar ? (
-                  <img src={creator.user.avatar || "/placeholder.svg"} alt="" className="w-16 h-16 rounded-full" />
+                  <img
+                    src={creator.user.avatar || "/placeholder.svg"}
+                    alt={`${creator.displayName} avatar`}
+                    className="w-16 h-16 rounded-full"
+                  />
                 ) : (
                   <div className="w-16 h-16 rounded-full bg-primary/10" />
                 )}
                 <div className="space-y-1 flex-1">
-                  <CardTitle className="text-2xl">{creator.displayName}</CardTitle>
-                  {creator.description && <CardDescription>{creator.description}</CardDescription>}
+                  <CardTitle className="text-2xl">
+                    {creator.displayName}
+                  </CardTitle>
+                  {creator.description && (
+                    <CardDescription>{creator.description}</CardDescription>
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -158,7 +248,9 @@ function SubscribeContent({ params }: { params: Promise<{ creatorId: string }> }
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div className="p-4 rounded-lg border border-border">
                   <Users className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-2xl font-bold">{creator.subscriberCount}</p>
+                  <p className="text-2xl font-bold">
+                    {creator.subscriberCount}
+                  </p>
                   <p className="text-sm text-muted-foreground">Subscribers</p>
                 </div>
                 <div className="p-4 rounded-lg border border-border">
@@ -168,7 +260,9 @@ function SubscribeContent({ params }: { params: Promise<{ creatorId: string }> }
                 </div>
                 <div className="p-4 rounded-lg border border-border">
                   <CreditCard className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-2xl font-bold">{formatPrice(creator.subscriptionPrice)}</p>
+                  <p className="text-2xl font-bold">
+                    {formatPrice(creator.subscriptionPrice)}
+                  </p>
                   <p className="text-sm text-muted-foreground">Per Month</p>
                 </div>
               </div>
@@ -182,7 +276,7 @@ function SubscribeContent({ params }: { params: Promise<{ creatorId: string }> }
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    Exclusive trading signals and market analysis
+                    Exclusive content and analysis
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -199,24 +293,30 @@ function SubscribeContent({ params }: { params: Promise<{ creatorId: string }> }
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    You need to create a sub-account before subscribing.{" "}
-                    <a href="/sub-account" className="underline">
+                    You need to **create a sub-account** before subscribing.{" "}
+                    <a href="/sub-account" className="underline font-medium">
                       Create one now
                     </a>
                   </AlertDescription>
                 </Alert>
               )}
 
-              <Button onClick={subscribe} disabled={isSubscribing || !subAccount} className="w-full" size="lg">
-                {isSubscribing ? (
+              <Button
+                onClick={subscribe}
+                disabled={isTransactionPending || isConfirming || !subAccount}
+                className="w-full"
+                size="lg"
+              >
+                {isTransactionPending || isConfirming ? (
                   <>
                     <Spinner className="w-4 h-4 mr-2" />
-                    Creating Subscription...
+                    {isTransactionPending ? "Confirming..." : "Processing..."}
                   </>
                 ) : (
                   <>
                     <CreditCard className="w-4 h-4 mr-2" />
-                    Subscribe for {formatPrice(creator.subscriptionPrice)} / month
+                    Subscribe for {formatPrice(creator.subscriptionPrice)} /
+                    month
                   </>
                 )}
               </Button>
@@ -225,13 +325,13 @@ function SubscribeContent({ params }: { params: Promise<{ creatorId: string }> }
         </div>
       </main>
     </div>
-  )
+  );
 }
 
-export default function SubscribePage({ params }: { params: Promise<{ creatorId: string }> }) {
-  return (
-    <AuthGuard>
-      <SubscribeContent params={params} />
-    </AuthGuard>
-  )
+export default function SubscribePage({
+  params,
+}: {
+  params: Promise<{ creatorId: string }>;
+}) {
+  return <SubscribeContent params={params} />;
 }

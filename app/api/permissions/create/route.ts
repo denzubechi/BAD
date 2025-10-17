@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     const dbPermission = await prisma.spendPermission.create({
       data: {
         userId: user.id,
-        permissionHash: permission.hash,
+        permissionHash: permission.permissionHash?.toLowerCase(),
         spender: spender.toLowerCase(),
         token: token.toLowerCase(),
         allowance: allowance.toString(),
