@@ -27,6 +27,9 @@ interface Article {
     username: string | null;
     avatar: string | null;
     address: string;
+    creatorProfile: {
+      displayName: string | null;
+    };
   };
 }
 
@@ -170,11 +173,14 @@ export function ArticleView({ article }: ArticleViewProps) {
           <div className="flex items-center justify-between py-6 border-y border-border">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center text-white font-bold">
-                {getInitials(article.author.username || article.author.address)}
+                {getInitials(
+                  article.author.creatorProfile.displayName ||
+                    article.author.address
+                )}
               </div>
               <div>
                 <p className="font-semibold">
-                  {article.author.username ||
+                  {article.author.creatorProfile.displayName ||
                     `${article.author.address.slice(
                       0,
                       6

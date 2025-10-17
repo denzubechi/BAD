@@ -48,6 +48,9 @@ interface Article {
   author: {
     username: string | null;
     avatar: string | null;
+    creatorProfile?: {
+      displayName: string;
+    };
   };
 }
 
@@ -232,10 +235,13 @@ export default function ExplorePage() {
 
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">
-                          {getInitials(article.author.username)}
+                          {getInitials(
+                            article.author.creatorProfile?.displayName || "Anon"
+                          )}
                         </div>
                         <span className="text-sm text-muted-foreground">
-                          {article.author.username || "Anonymous"}
+                          {article.author.creatorProfile?.displayName ||
+                            "Anonymous"}
                         </span>
                       </div>
                     </div>
